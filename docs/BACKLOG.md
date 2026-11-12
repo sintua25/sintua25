@@ -10,12 +10,13 @@ Urutan kerja. Setiap fase berhenti untuk review.
 - [x] Jejak audit berantai hash, koreksi wajib alasan, konfirmasi mengunci, `verify`
 - [x] CLI JSON Lines, benchmark sintetis
 
-## Fase 1: Aplikasi desktop jalan
-- [ ] Tauri 2 + React + TS, UI tiga panel sesuai DESIGN.md
-- [ ] Pilih folder, proses (progres dari JSON Lines), review, koreksi, konfirmasi
-- [ ] Pratinjau gambar lewat asset protocol, kotak OCR di atas foto
-- [ ] Mesin Python dibundel sebagai sidecar (tanpa instal Python terpisah)
-- [ ] Uji `npm run tauri dev` di Windows
+## Fase 1: Aplikasi desktop jalan (selesai di Linux, menunggu uji Windows)
+- [x] Tauri 2 + React + TS, UI tiga panel sesuai DESIGN.md, mode gelap
+- [x] Pilih folder, proses (progres dari JSON Lines), review, koreksi, tambah nilai, konfirmasi, verify
+- [x] Pratinjau gambar lewat asset protocol, kotak OCR di atas foto (diuji di path Unicode + spasi)
+- [x] Buka folder dari argumen baris perintah; "Buka lagi" folder terakhir
+- [ ] Uji `npm run tauri dev` di Windows (alur penuh + `vouchocr verify`)
+- [ ] Mesin Python dibundel sebagai sidecar (installer tanpa instal Python terpisah)
 
 ## Fase 2: Ekspor
 - [ ] JSON gabungan + koreksi, alasan, status review

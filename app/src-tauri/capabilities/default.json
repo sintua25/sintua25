@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Izin jendela utama: perintah inti dan dialog pilih folder saja.",
+  "windows": ["main"],
+  "permissions": ["core:default", "dialog:allow-open"]
+}

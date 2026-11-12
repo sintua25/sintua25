@@ -11,6 +11,7 @@ punya riwayat lengkap: dibaca dari baris mana, siapa mengubah, kapan, kenapa.
 from __future__ import annotations
 
 import json
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -160,6 +161,8 @@ class Workspace:
             return None  # file hasil rusak -> proses ulang
 
     def page(self, sha: str) -> dict:
+        if not re.fullmatch(r"[0-9a-f]{64}", sha or ""):
+            raise WorkspaceError("BAD_PAGE_ID", "ID foto tidak valid.", "Muat ulang data.")
         p = self.pages_dir / f"{sha}.json"
         if not p.exists():
             raise WorkspaceError("PAGE_NOT_FOUND", f"Hasil OCR untuk {sha[:12]}… tidak ada.",

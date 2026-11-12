@@ -14,3 +14,9 @@ dist/
 *.tiff
 OCR_Vouching_*.json
 List_Filling*.xlsx
+app/dist/
+app/src-tauri/target/
+app/src-tauri/gen/
+# Pengecualian: foto demo sintetis dan ikon aplikasi (bukan data klien)
+!app/public/demo/**/*.jpg
+!app/src-tauri/icons/*.png

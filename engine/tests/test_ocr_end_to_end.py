@@ -54,6 +54,18 @@ def test_faktur_values_and_bank_account_ignored(processed):
     assert [f["value"] for f in total] == ["3552000"]
 
 
+def test_page_command_returns_boxes_in_original_coordinates(processed):
+    ws, _ = processed
+    page, _ = fields_of(ws, "faktur.jpg")
+    code, [full], _ = cli("page", "-w", ws, "--page", page["sha256"])
+    assert code == 0 and full["size"] == [1240, 900]
+    for line in full["lines"]:
+        assert len(line["box"]) == 4
+        assert all(0 <= x <= 1240 and 0 <= y <= 900 for x, y in line["box"])
+    code, [e], _ = cli("page", "-w", ws, "--page", "../../etc/passwd")
+    assert code == 2 and e["code"] == "BAD_PAGE_ID"
+
+
 def test_review_flow_and_verify(processed):
     ws, _ = processed
     page, _ = fields_of(ws, "kwitansi miring.jpg")

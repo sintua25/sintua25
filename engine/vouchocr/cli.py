@@ -31,6 +31,10 @@ def build_parser() -> argparse.ArgumentParser:
     st = sub.add_parser("state", help="Kondisi review saat ini (JSON).")
     st.add_argument("--workspace", "-w", type=Path, required=True)
 
+    pg = sub.add_parser("page", help="Hasil OCR lengkap satu foto (baris teks + kotak).")
+    pg.add_argument("--workspace", "-w", type=Path, required=True)
+    pg.add_argument("--page", required=True)
+
     co = sub.add_parser("correct", help="Koreksi satu nilai (alasan wajib).")
     co.add_argument("--workspace", "-w", type=Path, required=True)
     co.add_argument("--page", required=True)
@@ -79,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
         ws.meta()  # galat jelas kalau bukan folder kerja
         if args.cmd == "state":
             _emit({"type": "state", **ws.state()})
+        elif args.cmd == "page":
+            _emit(ws.page(args.page))
         elif args.cmd == "correct":
             _emit({"type": "saved", "entry": ws.correct(args.page, args.field, args.value, args.reason,
                                                         expected=args.expected, actor=args.actor)})

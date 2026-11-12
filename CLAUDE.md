@@ -41,6 +41,24 @@ vouchocr process "<folder foto>" -w "<folder kerja>"
 vouchocr verify -w "<folder kerja>"
 ```
 
+Aplikasi desktop (`app/`, Tauri 2 + React + TS):
+
+```
+cd app
+npm install
+npm run typecheck && npm test                         # TypeScript + unit test UI
+npm run dev                                           # browser, mode demo (data sintetis)
+npm run tauri dev                                     # jendela desktop + mesin OCR sungguhan
+cd src-tauri && cargo test                            # tes jembatan Rust
+# tes jembatan dengan mesin asli:
+VOUCHOCR_PYTHON=../../engine/.venv/bin/python VOUCHOCR_TEST_FOLDER=<folder foto contoh> cargo test
+```
+
+Aplikasi memanggil `python -m vouchocr` (venv `engine/.venv`, atau `VOUCHOCR_PYTHON`). Semua
+aturan audit ada di mesin; Rust hanya meneruskan perintah dan galat. Nilai dari pengguna dikirim
+sebagai `--nama=nilai` supaya nilai berawalan "-" tidak terbaca sebagai opsi.
+Panduan untuk pemilik produk: `docs/MENJALANKAN.md`.
+
 ## Peta kode (`engine/vouchocr`)
 
 | File | Isi |
@@ -53,3 +71,13 @@ vouchocr verify -w "<folder kerja>"
 | `audit.py` | log append-only berantai hash + `audit.head` |
 | `workspace.py` | folder kerja: proses, koreksi, konfirmasi, state, verify |
 | `cli.py` | antarmuka JSON Lines untuk aplikasi desktop |
+
+## Peta kode (`app/`)
+
+| File | Isi |
+|---|---|
+| `src-tauri/src/engine.rs` | jalankan mesin, baca JSON Lines, terjemahkan galat; nama folder kerja |
+| `src-tauri/src/lib.rs` | perintah Tauri; folder kerja di Dokumen; izin asset protocol per folder sumber |
+| `src/api/` | antarmuka `Api`: `tauri.ts` (desktop) dan `demo.ts` (browser/tes, data `src/demo/data.json`) |
+| `src/lib/` | format angka (string, tanpa float), saringan & urutan ledger, geometri kotak |
+| `src/components/` | TopBar, PhotoList, PhotoView (foto + kotak SVG), Ledger (koreksi, tambah nilai, konfirmasi) |
