@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+node_modules/
+target/
+dist/
+# Data klien tidak pernah masuk repo
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+OCR_Vouching_*.json
+List_Filling*.xlsx

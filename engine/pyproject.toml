@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vouchocr"
+version = "0.1.0"
+description = "OCR lokal untuk dokumen vouching audit (Meja Vouching)."
+requires-python = ">=3.11"
+dependencies = [
+    "rapidocr==3.10.0",        # Apache-2.0; model PP-OCR ONNX ikut di paket, tanpa unduhan
+    "onnxruntime==1.31.1",     # MIT
+    "opencv-python-headless>=4.10",
+    "numpy>=1.26",
+    "pillow>=10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+vouchocr = "vouchocr.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["vouchocr*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["ocr: tes yang menjalankan model OCR sungguhan (lebih lambat)"]
