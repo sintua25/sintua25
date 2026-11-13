@@ -11,6 +11,8 @@ export interface Api {
   state(session: Session): Promise<ReviewState>;
   page(session: Session, sha: string): Promise<PageDetail>;
   imageUrl(session: Session, relFile: string): string;
+  /** URL file di folder kerja, misal gambar halaman PDF (`renders/<id>.png`). */
+  workspaceUrl(session: Session, relFile: string): string;
   correct(session: Session, sha: string, field: number, value: string, reason: string, expected: string): Promise<void>;
   addField(session: Session, sha: string, kind: FieldKind, value: string, reason: string): Promise<void>;
   confirm(session: Session, sha: string): Promise<void>;

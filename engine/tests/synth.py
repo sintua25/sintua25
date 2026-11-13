@@ -79,3 +79,38 @@ def save(im: Image.Image, path: Path, quality: int = 85) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     im.save(path, quality=quality)
     return path
+
+
+def save_pdf(pages: list[Image.Image], path: Path) -> Path:
+    """PDF hasil scan: tiap halaman satu gambar (Pillow menulis PDF tanpa paket tambahan)."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pages[0].save(path, "PDF", resolution=150, save_all=True, append_images=pages[1:])
+    return path
+
+
+_W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+
+
+def save_docx(path: Path, paragraphs: list[str], table: list[list[str]] = (), images: list[Image.Image] = (),
+              extra_media: dict[str, bytes] | None = None) -> Path:
+    """.docx minimal: paragraf, satu tabel, dan gambar di word/media (cukup untuk pembaca kita)."""
+    import io
+    import zipfile
+    from xml.sax.saxutils import escape
+
+    def p(t):
+        return f"<w:p><w:r><w:t>{escape(t)}</w:t></w:r></w:p>"
+
+    rows = "".join("<w:tr>" + "".join(f"<w:tc>{p(c)}</w:tc>" for c in r) + "</w:tr>" for r in table)
+    body = "".join(map(p, paragraphs)) + (f"<w:tbl>{rows}</w:tbl>" if table else "")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("[Content_Types].xml", "<Types/>")
+        z.writestr("word/document.xml", f'<?xml version="1.0"?><w:document {_W}><w:body>{body}</w:body></w:document>')
+        for i, im in enumerate(images, 1):
+            buf = io.BytesIO()
+            im.save(buf, "PNG")
+            z.writestr(f"word/media/image{i}.png", buf.getvalue())
+        for name, data in (extra_media or {}).items():
+            z.writestr(f"word/media/{name}", data)
+    return path

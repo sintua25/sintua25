@@ -41,6 +41,10 @@ export interface PageState {
   flags: Flag[];
   status: PageStatus;
   fields: Field[];
+  /** Gambar halaman PDF/Word di folder kerja (relatif); null/kosong = tampilkan file sumber. */
+  image?: string | null;
+  /** "image" (foto), "pdf_page", "docx_image", atau "docx_text" (teks Word, tanpa gambar). */
+  source_kind?: string;
 }
 
 export interface ReviewState {

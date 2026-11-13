@@ -14,6 +14,7 @@ MESSAGES: dict[str, str] = {
     "DATE_INVALID": "Tanggal tidak valid di kalender.",
     "DATE_US_ORDER": "Tanggal hanya valid kalau dibaca bulan/hari (format AS).",
     "BLURRY": "Foto kemungkinan buram; cek angka dengan teliti.",
+    "MEDIA_SKIPPED": "Ada gambar di file Word ini yang rusak dan tidak dibaca.",
 }
 
 

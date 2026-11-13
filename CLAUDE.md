@@ -66,7 +66,8 @@ Panduan untuk pemilik produk: `docs/MENJALANKAN.md`.
 |---|---|
 | `preprocess.py` | baca foto aman (EXIF, hash), perkecil, deteksi buram dan bayangan |
 | `ocr.py` | RapidOCR (PP-OCR ONNX), baca ulang baris berangka yang ragu |
-| `pipeline.py` | satu foto -> satu hasil halaman; cadangan versi tanpa bayangan |
+| `documents.py` | PDF -> halaman (pypdfium2), Word .docx -> teks + gambar; ID halaman turunan |
+| `pipeline.py` | satu foto/halaman -> satu hasil halaman; cadangan versi tanpa bayangan |
 | `fields.py` | ambil nomor dokumen, nominal, tanggal + indikator keraguan |
 | `money.py`, `ids.py` | parse nominal ke Decimal; kunci kanonik nomor dokumen (O->0, I->1, L->1) |
 | `audit.py` | log append-only berantai hash + `audit.head` |
@@ -79,7 +80,7 @@ Panduan untuk pemilik produk: `docs/MENJALANKAN.md`.
 | File | Isi |
 |---|---|
 | `src-tauri/src/engine.rs` | jalankan mesin, baca JSON Lines, terjemahkan galat; nama folder kerja |
-| `src-tauri/src/lib.rs` | perintah Tauri; folder kerja di Dokumen; izin asset protocol per folder sumber |
+| `src-tauri/src/lib.rs` | perintah Tauri; folder kerja di `<program>\Output OCR`; izin asset protocol |
 | `src/api/` | antarmuka `Api`: `tauri.ts` (desktop) dan `demo.ts` (browser/tes, data `src/demo/data.json`) |
 | `src/lib/` | format angka (string, tanpa float), saringan & urutan ledger, geometri kotak |
 | `src/components/` | TopBar, PhotoList, PhotoView (foto + kotak SVG), Ledger (koreksi, tambah nilai, konfirmasi) |

@@ -13,16 +13,43 @@ from .fields import extract
 from .flags import flag
 from .models import OcrLine
 from .ocr import REREAD_BELOW, OcrBackend, reread_line
+from .documents import DOCUMENT_SUFFIXES, IMAGE_SUFFIXES, Unit
 from .preprocess import BLUR_THRESHOLD, load_image, prepare
 
 SCHEMA = 1
-IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".webp"}
 
 
 def process_image(path: Path, backend: OcrBackend, rel: str | None = None) -> dict:
     t0 = time.perf_counter()
     loaded = load_image(path)
-    prep = prepare(loaded.image)
+    return _ocr_page(loaded.image, loaded.size, loaded.sha256, rel or Path(path).name, backend, t0)
+
+
+def process_unit(unit: Unit, backend: OcrBackend) -> tuple[dict, bytes | None]:
+    """Halaman dari PDF/Word -> (hasil halaman, PNG untuk ditampilkan atau None untuk teks)."""
+    t0 = time.perf_counter()
+    if unit.load is None:  # teks Word: dibaca langsung, tanpa OCR, keyakinan 100%
+        lines = [OcrLine(text=t, score=1.0, box=[(10, 10 + 40 * i), (990, 10 + 40 * i), (990, 40 + 40 * i),
+                                                 (10, 40 + 40 * i)]) for i, t in enumerate(unit.text_lines)]
+        fields, page_flags = extract(lines)
+        page = {"type": "page", "schema": SCHEMA, "file": unit.rel, "sha256": unit.key,
+                "size": [1000, 40 * len(lines) + 20], "preprocess": {"variant": "teks"},
+                "lines": [asdict(l) for l in lines], "fields": [asdict(f) for f in fields], "flags": page_flags,
+                "engine": {"vouchocr": __version__, "ocr": "teks-word"},
+                "elapsed_ms": round((time.perf_counter() - t0) * 1000)}
+        render = None
+    else:
+        image, render, size = unit.load()
+        page = _ocr_page(image, size, unit.key, unit.rel, backend, t0)
+    page["source_kind"] = unit.kind
+    page["image"] = f"renders/{unit.key}.png" if render is not None else None
+    for note in unit.notes:
+        page["flags"].append(flag("MEDIA_SKIPPED", detail=note))
+    return page, render
+
+
+def _ocr_page(image, size, sha: str, rel: str, backend: OcrBackend, t0: float) -> dict:
+    prep = prepare(image)
 
     # Pembacaan utama di foto warna asli (paling akurat di benchmark). Versi tanpa
     # bayangan hanya dipakai sebagai cadangan kalau nomor dokumen atau nominal
@@ -41,9 +68,9 @@ def process_image(path: Path, backend: OcrBackend, rel: str | None = None) -> di
     return {
         "type": "page",
         "schema": SCHEMA,
-        "file": rel or Path(path).name,
-        "sha256": loaded.sha256,
-        "size": list(loaded.size),
+        "file": rel,
+        "sha256": sha,
+        "size": list(size),
         "preprocess": {**prep.summary(), "variant": variant},
         "lines": [asdict(l) for l in lines],
         "fields": [asdict(f) for f in fields],
@@ -72,11 +99,11 @@ def _page_score(lines, fields) -> tuple:
 
 
 def find_images(folder: Path) -> list[Path]:
-    """Semua foto di folder (rekursif), urut stabil. Folder 'Backup' tidak dibuka sama sekali."""
+    """Semua foto, PDF, dan Word di folder (rekursif), urut stabil. Folder 'Backup' tidak dibuka sama sekali."""
     out = []
     for root, dirs, files in os.walk(folder):
         dirs[:] = sorted((d for d in dirs if d.lower() != "backup" and not d.startswith(".")), key=str.lower)
         for name in sorted(files, key=str.lower):
-            if not name.startswith(".") and Path(name).suffix.lower() in IMAGE_SUFFIXES:
+            if not name.startswith(".") and Path(name).suffix.lower() in DOCUMENT_SUFFIXES and not name.startswith("~$"):
                 out.append(Path(root) / name)
     return out

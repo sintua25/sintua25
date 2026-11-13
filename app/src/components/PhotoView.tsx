@@ -53,7 +53,10 @@ export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField
         <button className="btn" onClick={() => setFit(!fit)}>{fit ? "Ukuran asli" : "Pas layar"}</button>
       </div>
       <div className="desk" ref={desk}>
-        {imgFailed ? (
+        {page.source_kind === "docx_text" ? (
+          <TextPage lines={detail?.lines.map((l) => l.text) ?? []} lineFields={lineFields} activeLine={activeLine}
+            onSelectField={onSelectField} />
+        ) : imgFailed ? (
           <div className="note note-error">
             Foto tidak bisa ditampilkan.
             <span className="hint">Mungkin file dipindah atau diganti nama setelah diproses. Pilih ulang folder sumbernya.</span>
@@ -82,5 +85,27 @@ export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField
         )}
       </div>
     </section>
+  );
+}
+
+/** Teks dari Word: dibaca langsung tanpa OCR, jadi yang ditampilkan adalah barisnya. */
+function TextPage({ lines, lineFields, activeLine, onSelectField }: {
+  lines: string[];
+  lineFields: Map<number, { ids: number[]; doubt: boolean }>;
+  activeLine: number | null;
+  onSelectField: (id: number) => void;
+}) {
+  return (
+    <ol className="textpage" aria-label="Teks dokumen Word">
+      {lines.map((text, i) => {
+        const f = lineFields.get(i);
+        const cls = [f && "has-field", f?.doubt && "doubt", i === activeLine && "active"].filter(Boolean).join(" ");
+        return (
+          <li key={i} className={cls || undefined}>
+            {f ? <button className="textline" onClick={() => onSelectField(f.ids[0]!)}>{text}</button> : text}
+          </li>
+        );
+      })}
+    </ol>
   );
 }

@@ -27,7 +27,9 @@ cd C:\MejaVouching\app
 npm run tauri dev
 ```
 
-Jendela Meja Vouching terbuka. Klik **Pilih folder**, pilih folder foto vouching.
+Jendela Meja Vouching terbuka. Klik **Pilih folder**, pilih folder berisi foto (JPG/PNG/TIFF), PDF, atau
+Word (.docx). PDF dibaca per halaman; dari Word, teksnya dibaca langsung dan gambar yang ditempel di-OCR.
+Word lama (.doc) belum bisa: simpan ulang sebagai .docx atau PDF.
 
 ## Setelah memperbarui kode
 
@@ -36,15 +38,16 @@ Kalau kode diperbarui (ZIP baru), ulangi `.\.venv\Scripts\python.exe -m pip inst
 
 ## Export Excel
 
-Klik **Export Excel** di kanan atas. File `vouching-<tanggal-jam>.xlsx` dan `.json` disimpan di folder
-`export` di dalam folder kerja (path lengkapnya tampil di layar). Export lama tidak pernah ditimpa.
+Klik **Export Excel** di kanan atas. File `vouching-<tanggal-jam>.xlsx` dan `.json` disimpan di
+`Output OCR\<nama folder> - <kode>\export` di folder program (path lengkapnya tampil di layar). Export lama tidak pernah ditimpa.
 Sheet: Ringkasan (satu baris per foto), Detail (nilai OCR asli vs nilai akhir + alasan koreksi),
 Jejak audit, Info.
 
 ## Yang perlu diketahui
 
-- Folder foto klien hanya dibaca. Hasil OCR, koreksi, dan jejak audit disimpan di
-  `Dokumen\Meja Vouching\<nama folder> - <kode>`.
+- Folder foto klien hanya dibaca. Hasil OCR, koreksi, jejak audit, dan Excel disimpan di folder
+  `Output OCR\<nama folder> - <kode>` di folder program. Folder kerja lama di `Dokumen\Meja Vouching`
+  disalin otomatis ke sana saat folder yang sama dibuka (yang lama tidak dihapus).
 - Folder bernama `Backup` dilewati.
 - Kalau muncul pesan "Python tidak ditemukan" atau "vouchocr belum terpasang", ulangi langkah 5 di atas.
 - Membuka di browser biasa (`npm run dev`, lalu http://localhost:1420) menampilkan **mode demo** dengan

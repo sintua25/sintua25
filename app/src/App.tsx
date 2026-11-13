@@ -195,7 +195,7 @@ export function App({ api }: { api: Api }) {
                   </button>
                 )}
               </div>
-              <p className="safe">Folder klien hanya dibaca, tidak pernah diubah. Folder bernama Backup dilewati. Hasil OCR dan jejak audit disimpan di Dokumen\Meja Vouching.</p>
+              <p className="safe">Bisa foto (JPG, PNG, TIFF), PDF, dan Word (.docx). Folder klien hanya dibaca, tidak pernah diubah. Folder bernama Backup dilewati. Hasil OCR, jejak audit, dan Excel disimpan di folder Output OCR di folder program.</p>
             </>
           )}
         </main>
@@ -204,7 +204,8 @@ export function App({ api }: { api: Api }) {
           <PhotoList pages={pages} filter={filter} selected={selected} onFilter={setFilter} onSelect={setSelected} />
           {page && actions ? (
             <>
-              <PhotoView page={page} detail={detail} imageUrl={api.imageUrl(session, page.files[0] ?? "")}
+              <PhotoView page={page} detail={detail}
+                imageUrl={page.image ? api.workspaceUrl(session, page.image) : api.imageUrl(session, page.files[0] ?? "")}
                 selectedField={field} onSelectField={setField} />
               <Ledger page={page} detail={detail} selectedField={field} onSelectField={setField} actions={actions}
                 hasNext={nextOpenPage(pages, page.sha256) !== null} />
@@ -212,7 +213,7 @@ export function App({ api }: { api: Api }) {
           ) : (
             <main className="empty" style={{ gridColumn: "2 / 4" }}>
               <h1>Tidak ada foto</h1>
-              <p>Folder ini tidak berisi foto JPG, PNG, atau TIFF di luar folder Backup.</p>
+              <p>Folder ini tidak berisi foto, PDF, atau Word (.docx) di luar folder Backup.</p>
             </main>
           )}
         </div>

@@ -1,6 +1,6 @@
 mod engine;
 
-use engine::{workspace_name, ApiError, Engine};
+use engine::{copy_dir, program_dir, workspace_name, ApiError, Engine};
 use serde::Serialize;
 use serde_json::Value;
 use std::path::PathBuf;
@@ -34,21 +34,33 @@ fn opt(name: &str, value: &str) -> String {
     format!("--{name}={value}")
 }
 
-/// Folder sumber dipilih: tentukan folder kerja (di Dokumen, di luar folder klien)
-/// dan izinkan foto di folder sumber tampil lewat asset protocol.
+/// Folder sumber dipilih: folder kerja = `<folder program>\\Output OCR\\<nama folder> - <kode>`
+/// (di luar folder klien). Foto sumber dan gambar halaman PDF/Word boleh tampil lewat asset protocol.
 #[tauri::command]
 async fn open_source(app: AppHandle, source: String) -> Result<Session, ApiError> {
     let src = PathBuf::from(&source);
     if !src.is_dir() {
         return Err(ApiError::new("SOURCE_MISSING", format!("Folder '{source}' tidak ada."), "Pilih ulang folder foto."));
     }
-    // Dokumen kalau ada (Windows selalu punya); kalau tidak, folder data aplikasi.
-    let docs = app.path().document_dir().or_else(|_| app.path().app_data_dir()).map_err(|e| {
-        ApiError::new("NO_WORKSPACE_DIR", format!("Tidak ada tempat menyimpan folder kerja: {e}"),
-            "Pastikan akun komputer ini punya folder Dokumen yang bisa ditulisi.")
-    })?;
-    let workspace = docs.join("Meja Vouching").join(workspace_name(&src));
-    app.asset_protocol_scope().allow_directory(&src, true).map_err(|e| {
+    let name = workspace_name(&src);
+    let workspace = program_dir().join("Output OCR").join(&name);
+    // Folder kerja lama (versi sebelumnya menyimpan di Dokumen) disalin sekali, supaya
+    // konfirmasi dan koreksi yang sudah ada tidak hilang. Yang lama tidak dihapus.
+    if !workspace.exists() {
+        if let Ok(docs) = app.path().document_dir() {
+            let old = docs.join("Meja Vouching").join(&name);
+            if old.join("workspace.json").is_file() {
+                copy_dir(&old, &workspace).map_err(|e| ApiError::new("MIGRATE_FAILED",
+                    format!("Folder kerja lama di '{}' gagal disalin ke Output OCR: {e}", old.display()),
+                    "Tutup aplikasi lain yang membuka folder itu, lalu pilih folder lagi."))?;
+            }
+        }
+    }
+    std::fs::create_dir_all(&workspace).map_err(|e| ApiError::new("NO_WORKSPACE_DIR",
+        format!("Folder '{}' tidak bisa dibuat: {e}", workspace.display()),
+        "Pastikan folder program tidak read-only, atau pindahkan program ke folder yang bisa ditulisi."))?;
+    let scope = app.asset_protocol_scope();
+    scope.allow_directory(&src, true).and_then(|_| scope.allow_directory(&workspace, true)).map_err(|e| {
         ApiError::new("ASSET_SCOPE", format!("Foto di folder ini tidak bisa ditampilkan: {e}"), "Pilih ulang folder.")
     })?;
     Ok(Session { source, workspace: workspace.to_string_lossy().into_owned() })

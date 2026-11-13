@@ -329,3 +329,22 @@ kbd {
 @media (max-width: 1180px) {
   .panes { grid-template-columns: 230px minmax(0, 1fr) 380px; }
 }
+
+/* Teks dari Word: lembar kertas bergaris, baris bernilai bisa diklik. */
+.textpage {
+  width: min(820px, 100%);
+  margin: 0;
+  padding: 28px 36px;
+  list-style: none;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--paper-rule);
+  font-size: 14px;
+  line-height: 1.5;
+}
+.textpage li { padding: 3px 6px; border-bottom: 1px solid var(--paper-rule); overflow-wrap: anywhere; }
+.textpage li.has-field { box-shadow: inset 3px 0 0 var(--tick); }
+.textpage li.doubt { background: var(--highlighter); }
+.textpage li.active { outline: 2px solid var(--ink); outline-offset: -2px; }
+.textline { all: unset; cursor: pointer; display: block; width: 100%; }
+.textline:focus-visible { outline: 2px solid var(--ink); }

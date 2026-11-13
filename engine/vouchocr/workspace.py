@@ -22,7 +22,8 @@ from .audit import AuditLog
 from .ids import canon_doc_id
 from .money import AmountError, parse_amount
 from .ocr import OcrBackend
-from .pipeline import SCHEMA, find_images, process_image
+from .documents import IMAGE_SUFFIXES, expand, file_sha, read_source
+from .pipeline import SCHEMA, find_images, process_image, process_unit
 from .preprocess import ImageLoadError
 from .storage import atomic_write_bytes, dump_json, sha256_file
 
@@ -107,43 +108,69 @@ class Workspace:
         for n, path in enumerate(images, 1):
             rel = path.relative_to(source).as_posix()
             try:
-                sha = sha256_file(path)
-                page_path = self.pages_dir / f"{sha}.json"
-                if page_path.exists() and sha in reviewed:
-                    # Koreksi menunjuk ke nilai hasil OCR ini; menimpanya memutus jejak.
-                    index[rel] = sha
-                    skipped += 1
-                    yield {"type": "skipped", "n": n, "file": rel, "sha256": sha, "reason": "sudah direview"}
-                    continue
-                if not force and page_path.exists() and self._page_engine(page_path) == __version__:
-                    index[rel] = sha
-                    skipped += 1
-                    yield {"type": "skipped", "n": n, "file": rel, "sha256": sha, "reason": "sudah diproses"}
-                    continue
-                page = process_image(path, backend, rel=rel)
-                if page["sha256"] != sha:
-                    raise ImageLoadError(f"'{rel}' berubah saat sedang dibaca. Tunggu sinkronisasi selesai, lalu proses ulang.")
-                result_hash = atomic_write_bytes(page_path, dump_json(page))
-                index[rel] = sha
-                self._save_index(index)
-                self.audit.append("process", f"page:{sha}", data={
-                    "file": rel, "result_sha256": result_hash, "engine": page["engine"]})
-                ok += 1
-                yield {"type": "page", "n": n, "file": rel, "sha256": sha,
-                       "fields": len(page["fields"]), "flags": [f["code"] for f in page["flags"]],
-                       "elapsed_ms": page["elapsed_ms"]}
+                if path.suffix.lower() in IMAGE_SUFFIXES:
+                    sha = sha256_file(path)
+                    jobs = [(rel, sha, lambda path=path, rel=rel, sha=sha: self._photo(path, rel, sha, backend))]
+                else:
+                    data = read_source(path)
+                    sha = file_sha(data)
+                    jobs = [(u.rel, u.key, lambda u=u: process_unit(u, backend))
+                            for u in expand(path, rel, data, sha)]
+                    for old in [k for k in index if k == rel or k.startswith(rel + "#")]:
+                        del index[old]  # file berubah (jumlah halaman beda): buang entri lama
             except ImageLoadError as e:
                 failed += 1
                 yield {"type": "error", "n": n, "file": rel, "code": "IMAGE_UNREADABLE", "message": str(e),
-                       "hint": "Foto ini dilewati; foto lain tetap diproses."}
-            except Exception as e:  # satu foto bermasalah tidak boleh menghentikan semuanya
-                failed += 1
-                yield {"type": "error", "n": n, "file": rel, "code": "OCR_FAILED",
-                       "message": f"OCR gagal untuk '{rel}': {type(e).__name__}: {e}",
-                       "hint": "Foto ini dilewati. Coba proses ulang; kalau tetap gagal, laporkan nama filenya."}
+                       "hint": "File ini dilewati; file lain tetap diproses."}
+                continue
+            for unit_rel, key, run in jobs:
+                try:
+                    page_path = self.pages_dir / f"{key}.json"
+                    if page_path.exists() and key in reviewed:
+                        # Koreksi menunjuk ke nilai hasil OCR ini; menimpanya memutus jejak.
+                        index[unit_rel] = key
+                        skipped += 1
+                        yield {"type": "skipped", "n": n, "file": unit_rel, "sha256": key, "reason": "sudah direview"}
+                        continue
+                    if not force and page_path.exists() and self._page_engine(page_path) == __version__:
+                        index[unit_rel] = key
+                        skipped += 1
+                        yield {"type": "skipped", "n": n, "file": unit_rel, "sha256": key, "reason": "sudah diproses"}
+                        continue
+                    page, render = run()
+                    rec = {"file": unit_rel}
+                    if render is not None:
+                        rec["render_sha256"] = atomic_write_bytes(self.root / page["image"], render)
+                    if key != sha:
+                        rec["source_sha256"] = sha
+                    rec["result_sha256"] = atomic_write_bytes(page_path, dump_json(page))
+                    rec["engine"] = page["engine"]
+                    index[unit_rel] = key
+                    self._save_index(index)
+                    self.audit.append("process", f"page:{key}", data=rec)
+                    ok += 1
+                    yield {"type": "page", "n": n, "file": unit_rel, "sha256": key,
+                           "fields": len(page["fields"]), "flags": [f["code"] for f in page["flags"]],
+                           "elapsed_ms": page["elapsed_ms"]}
+                except ImageLoadError as e:
+                    failed += 1
+                    yield {"type": "error", "n": n, "file": unit_rel, "code": "IMAGE_UNREADABLE", "message": str(e),
+                           "hint": "File ini dilewati; file lain tetap diproses."}
+                except Exception as e:  # satu halaman bermasalah tidak boleh menghentikan semuanya
+                    failed += 1
+                    yield {"type": "error", "n": n, "file": unit_rel, "code": "OCR_FAILED",
+                           "message": f"OCR gagal untuk '{unit_rel}': {type(e).__name__}: {e}",
+                           "hint": "Halaman ini dilewati. Coba proses ulang; kalau tetap gagal, laporkan nama filenya."}
         self._save_index(index)
         yield {"type": "done", "processed": ok, "skipped": skipped, "failed": failed,
                "elapsed_s": round(time.perf_counter() - t0, 1)}
+
+    @staticmethod
+    def _photo(path: Path, rel: str, sha: str, backend: OcrBackend) -> tuple[dict, None]:
+        page = process_image(path, backend, rel=rel)
+        if page["sha256"] != sha:
+            raise ImageLoadError(f"'{rel}' berubah saat sedang dibaca. Tunggu sinkronisasi selesai, lalu proses ulang.")
+        return page, None
 
     def index(self) -> dict[str, str]:
         try:
@@ -181,6 +208,7 @@ class Workspace:
             page = self.page(sha)
             pages[sha] = {
                 "sha256": sha, "files": [rel], "flags": page["flags"], "status": "belum_dicek",
+                "image": page.get("image"), "source_kind": page.get("source_kind", "image"),
                 "fields": [{**f, "id": i, "original": f["value"], "source": "ocr", "history": []}
                            for i, f in enumerate(page["fields"])],
             }
@@ -274,16 +302,23 @@ class Workspace:
         chain = self.audit.verify()
         problems = [] if chain.ok else [chain.problem]
         expected: dict[str, str] = {}
+        renders: dict[str, str] = {}
         if chain.ok:
             for e in self.audit.entries():
                 if e["action"] == "process":
                     expected[e["target"][5:]] = e["data"]["result_sha256"]
+                    if "render_sha256" in e["data"]:
+                        renders[e["target"][5:]] = e["data"]["render_sha256"]
         for sha, h in expected.items():
             p = self.pages_dir / f"{sha}.json"
             if not p.exists():
                 problems.append(f"Hasil OCR {sha[:12]}… hilang.")
             elif sha256_file(p) != h:
                 problems.append(f"Hasil OCR {sha[:12]}… berubah setelah dicatat di jejak audit.")
+        for sha, h in renders.items():
+            p = self.root / "renders" / f"{sha}.png"
+            if not p.exists() or sha256_file(p) != h:
+                problems.append(f"Gambar halaman {sha[:12]}… hilang atau berubah setelah dicatat di jejak audit.")
         return {"type": "verify", "ok": not problems, "entries": chain.entries,
                 "pages_checked": len(expected), "last_hash": chain.last_hash, "problems": problems}
 

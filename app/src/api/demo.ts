@@ -65,6 +65,7 @@ export function createDemoApi(): Api {
       return d;
     },
     imageUrl: (_s, rel) => `/demo/${rel.split("/").map(encodeURIComponent).join("/")}`,
+    workspaceUrl: () => "", // data demo hanya berisi foto
     async correct(_s, sha, id, value, reason, expected) {
       const p = find(sha);
       const f = p.fields[id];

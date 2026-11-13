@@ -137,6 +137,43 @@ fn crashed(stderr: &str) -> ApiError {
 
 /// Nama folder kerja: nama folder sumber + sidik 8 heksa dari path lengkapnya,
 /// supaya dua folder bernama sama di tempat berbeda tidak tercampur.
+/// Folder program: akar repo saat pengembangan (berisi `engine/`), atau folder file .exe.
+pub fn program_dir() -> PathBuf {
+    let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..");
+    if repo.join("engine").join("vouchocr").is_dir() {
+        return repo.canonicalize().map(strip_unc).unwrap_or(repo);
+    }
+    std::env::current_exe()
+        .ok()
+        .and_then(|p| p.parent().map(Path::to_path_buf))
+        .unwrap_or_else(|| PathBuf::from("."))
+}
+
+/// `canonicalize` di Windows memberi `\\?\D:\...`; Python dan pengguna lebih suka `D:\...`.
+fn strip_unc(p: PathBuf) -> PathBuf {
+    let s = p.to_string_lossy();
+    match s.strip_prefix(r"\\?\") {
+        Some(rest) if !rest.starts_with("UNC") => PathBuf::from(rest),
+        _ => p,
+    }
+}
+
+/// Salin isi folder (rekursif). Dipakai untuk memindahkan folder kerja lama ke "Output OCR"
+/// tanpa menghapus yang lama: kalau penyalinan gagal di tengah, yang lama tetap utuh.
+pub fn copy_dir(from: &Path, to: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let target = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir(&entry.path(), &target)?;
+        } else {
+            std::fs::copy(entry.path(), &target)?;
+        }
+    }
+    Ok(())
+}
+
 pub fn workspace_name(source: &Path) -> String {
     // Dipisah manual (bukan Path::file_name) supaya path Windows juga benar saat dites di Linux.
     let normalized = source.to_string_lossy().replace('\\', "/");
@@ -249,6 +286,24 @@ mod tests {
         let v = engine.call(&["verify", &ws_opt]).unwrap();
         assert_eq!(v["ok"], false);
         let _ = std::fs::remove_dir_all(&ws);
+    }
+
+    #[test]
+    fn copy_dir_copies_nested_files() {
+        let base = std::env::temp_dir().join(format!("mv-copy-{}", std::process::id()));
+        let (a, b) = (base.join("a"), base.join("b"));
+        std::fs::create_dir_all(a.join("pages")).unwrap();
+        std::fs::write(a.join("audit.jsonl"), "x").unwrap();
+        std::fs::write(a.join("pages").join("p.json"), "{}").unwrap();
+        copy_dir(&a, &b).unwrap();
+        assert_eq!(std::fs::read_to_string(b.join("pages").join("p.json")).unwrap(), "{}");
+        assert!(a.join("audit.jsonl").exists(), "folder lama tidak dihapus");
+        std::fs::remove_dir_all(&base).unwrap();
+    }
+
+    #[test]
+    fn program_dir_in_dev_is_repo_root() {
+        assert!(program_dir().join("engine").join("vouchocr").is_dir());
     }
 
     #[test]

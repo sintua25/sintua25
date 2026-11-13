@@ -14,6 +14,7 @@ dependencies = [
     "numpy>=1.26",
     "pillow>=10",
     "openpyxl==3.1.5",         # MIT; tulis .xlsx tanpa Excel terpasang
+    "pypdfium2==5.15.2",       # Apache-2.0/BSD-3; render halaman PDF (pdfium ikut di paket, offline)
 ]
 
 [project.optional-dependencies]

@@ -26,6 +26,11 @@ Urutan kerja. Setiap fase berhenti untuk review.
 - [x] Nominal utama hanya diisi kalau tidak ambigu; selain itu kosong + ditandai (mesin tidak menebak)
 - [ ] Tombol "Buka file" langsung dari aplikasi (perlu plugin opener)
 
+## Tambahan (permintaan 2026-11-13)
+- [x] Baca PDF (per halaman, 200 dpi) dan Word .docx (teks langsung + OCR gambar tempelan); .doc diberi pesan
+- [x] Folder kerja di `<folder program>\Output OCR`, folder lama di Dokumen disalin sekali
+- [ ] PDF digital: pakai lapisan teks PDF langsung (lebih akurat dari OCR) kalau ada
+
 ## Fase 3: Filing
 - [ ] `samples.py` baca List_Filling.xlsx, konfigurasi per sheet di YAML/JSON
 - [ ] `matching.py`: nomor dokumen kanonik; rekening bank dan awalan APM-/AP-/OUT- bukan kunci

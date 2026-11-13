@@ -25,6 +25,7 @@ export const tauriApi: Api = {
   state: (s) => invoke<ReviewState>("review_state", { workspace: s.workspace }),
   page: (s, sha) => invoke<PageDetail>("page_detail", { workspace: s.workspace, sha }),
   imageUrl: (s, rel) => convertFileSrc(joinPath(s.source, rel)),
+  workspaceUrl: (s, rel) => convertFileSrc(joinPath(s.workspace, rel)),
 
   async correct(s, sha, field, value, reason, expected) {
     await invoke("correct", { workspace: s.workspace, sha, field, value, reason, expected });
