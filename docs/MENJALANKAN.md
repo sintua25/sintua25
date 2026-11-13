@@ -1,5 +1,22 @@
 # Menjalankan Meja Vouching di Windows
 
+## Cara paling gampang (untuk pengguna): installer
+
+1. Buka halaman Releases repo, bagian **Meja Vouching (installer terbaru)**, download `Meja-Vouching-Setup.exe`
+   (atau minta file itu dari pemilik produk).
+2. Double-click. Kalau muncul "Windows protected your PC": klik **More info** lalu **Run anyway**
+   (installer belum ditandatangani sertifikat berbayar).
+3. Next sampai selesai. Tidak perlu hak admin, tidak perlu Python/Node/Rust.
+4. Buka **Meja Vouching** dari ikon di desktop atau Start Menu.
+
+Hasil (folder kerja dan Excel) ada di folder `Output OCR` di dalam folder program
+(`%LOCALAPPDATA%\Meja Vouching\Output OCR`); tombol **Buka folder hasil** muncul setelah export.
+
+Installer dibuat otomatis oleh GitHub Actions (`.github/workflows/installer-windows.yml`) setiap ada
+perubahan di `app/` atau `engine/`.
+
+## Untuk pengembang: dari kode
+
 Sekali saja (persiapan), lalu cukup langkah "Setiap kali".
 
 ## Persiapan (sekali)
