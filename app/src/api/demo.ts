@@ -99,5 +99,14 @@ export function createDemoApi(): Api {
       p.status = "belum_dicek";
     },
     verify: async () => ({ ok: true, entries: seq, pages_checked: pages.length, last_hash: "demo", problems: [] }),
+    // Mode demo tidak menulis file; hanya menunjukkan bentuk hasilnya.
+    exportFiles: async (s) => ({
+      files: [
+        { path: `${s.workspace}/export/vouching-demo.json`, sha256: "demo" },
+        { path: `${s.workspace}/export/vouching-demo.xlsx`, sha256: "demo" },
+      ],
+      pages: pages.length,
+      confirmed: pages.filter((p) => p.status === "dikonfirmasi").length,
+    }),
   };
 }

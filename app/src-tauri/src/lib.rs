@@ -123,12 +123,18 @@ async fn verify(workspace: String) -> Result<Value, ApiError> {
     blocking(call(vec!["verify".into(), "-w".into(), workspace])).await
 }
 
+/// Excel + JSON ke `<folder kerja>/export`; mesin mencatat hash-nya di jejak audit.
+#[tauri::command]
+async fn export_files(workspace: String) -> Result<Value, ApiError> {
+    blocking(call(vec!["export".into(), "-w".into(), workspace])).await
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            startup_source, open_source, process, review_state, page_detail, correct, add_field, confirm, unconfirm, verify
+            startup_source, open_source, process, review_state, page_detail, correct, add_field, confirm, unconfirm, verify, export_files
         ])
         .run(tauri::generate_context!())
         .expect("gagal menjalankan Meja Vouching");

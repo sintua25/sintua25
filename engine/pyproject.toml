@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "vouchocr"
-version = "0.1.0"
+version = "0.2.0"
 description = "OCR lokal untuk dokumen vouching audit (Meja Vouching)."
 requires-python = ">=3.11"
 dependencies = [
@@ -13,6 +13,7 @@ dependencies = [
     "opencv-python-headless>=4.10",
     "numpy>=1.26",
     "pillow>=10",
+    "openpyxl==3.1.5",         # MIT; tulis .xlsx tanpa Excel terpasang
 ]
 
 [project.optional-dependencies]

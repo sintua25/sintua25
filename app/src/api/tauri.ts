@@ -1,7 +1,7 @@
 import { Channel, convertFileSrc, invoke } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
 import type { Api } from "./api";
-import type { PageDetail, ProcessEvent, ReviewState, Session, VerifyResult } from "./types";
+import type { ExportResult, PageDetail, ProcessEvent, ReviewState, Session, VerifyResult } from "./types";
 import { joinPath } from "../lib/paths";
 
 export const tauriApi: Api = {
@@ -39,4 +39,5 @@ export const tauriApi: Api = {
     await invoke("unconfirm", { workspace: s.workspace, sha, reason });
   },
   verify: (s) => invoke<VerifyResult>("verify", { workspace: s.workspace }),
+  exportFiles: (s) => invoke<ExportResult>("export_files", { workspace: s.workspace }),
 };

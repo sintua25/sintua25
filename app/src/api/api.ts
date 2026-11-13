@@ -1,4 +1,4 @@
-import type { FieldKind, PageDetail, ProcessEvent, ReviewState, Session, VerifyResult } from "./types";
+import type { ExportResult, FieldKind, PageDetail, ProcessEvent, ReviewState, Session, VerifyResult } from "./types";
 
 /** Semua yang dibutuhkan UI dari mesin. Implementasi: Tauri (desktop) dan demo (browser/tes). */
 export interface Api {
@@ -16,4 +16,6 @@ export interface Api {
   confirm(session: Session, sha: string): Promise<void>;
   unconfirm(session: Session, sha: string, reason: string): Promise<void>;
   verify(session: Session): Promise<VerifyResult>;
+  /** Tulis Excel + JSON ke folder kerja; hash file dicatat di jejak audit. */
+  exportFiles(session: Session): Promise<ExportResult>;
 }

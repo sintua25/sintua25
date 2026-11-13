@@ -56,6 +56,9 @@ _TOTAL_KW = re.compile(
     r"\b(total|grand\s*total|jumlah|sejumlah|sebesar|dibayar|bayar|tagihan|nilai|amount)\b", re.I)
 _SKIP_AMOUNT_KW = re.compile(r"\b(rek(ening)?|a/?c|acc(ount)?|npwp|nik|telp|tel|hp|fax|no\.?\s*rek)\b", re.I)
 _TERBILANG = re.compile(r"\bterbilang\b|\brupiah\b(?!.*\d)", re.I)
+# "IDR 1 Million", "Rp 5 juta": angka di kalimat (syarat, catatan kaki), bukan nilai transaksi.
+_MAGNITUDE_WORD = re.compile(
+    r"\s*(juta|jt|ribu|rb|miliar|milyar|triliun|million|mio|thousand|billion|bn)\b", re.I)
 
 _AMOUNT = re.compile(
     r"(?<![\w/.,-])"
@@ -199,7 +202,7 @@ def _amounts(fixed: str, raw: str, i: int, score: float, taken, is_total: bool):
         return
     for m in _AMOUNT.finditer(fixed):
         span = m.span()
-        if _overlaps(span, taken):
+        if _overlaps(span, taken) or _MAGNITUDE_WORD.match(fixed, span[1]):
             continue
         num = m["num"]
         digits = sum(c.isdigit() for c in num)

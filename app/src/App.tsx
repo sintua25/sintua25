@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Api } from "./api/api";
-import type { ApiError, PageDetail, ReviewState, Session, VerifyResult } from "./api/types";
+import type { ApiError, ExportResult, PageDetail, ReviewState, Session, VerifyResult } from "./api/types";
 import { isApiError } from "./api/types";
 import { Ledger, type LedgerActions } from "./components/Ledger";
 import { PhotoList } from "./components/PhotoList";
@@ -24,6 +24,7 @@ export function App({ api }: { api: Api }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [verify, setVerify] = useState<VerifyResult | null>(null);
+  const [exported, setExported] = useState<ExportResult | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const pages = useMemo(() => review?.pages ?? [], [review]);
@@ -149,17 +150,32 @@ export function App({ api }: { api: Api }) {
     }
   };
 
+  const runExport = async () => {
+    if (!session) return;
+    setBusy(true);
+    setError(null);
+    setExported(null);
+    try {
+      setExported(await api.exportFiles(session));
+      say("Excel diexport");
+    } catch (e) {
+      setError(asError(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const pct = progress && progress.total ? (progress.done / progress.total) * 100 : progress ? 2 : 0;
 
   return (
     <div className="app">
       <TopBar session={session} busy={busy} demo={api.mode === "demo"} onChoose={choose}
-        onProcess={() => session && runProcess(session)} onVerify={runVerify} />
+        onProcess={() => session && runProcess(session)} onVerify={runVerify} onExport={runExport} />
       <div className="progress" aria-hidden={!busy}>
         {busy && progress && <div style={{ width: `${pct}%` }} />}
       </div>
-      <Banners error={error} verify={verify} progress={busy ? null : progress}
-        onClose={() => { setError(null); setVerify(null); setProgress(null); }} />
+      <Banners error={error} verify={verify} exported={exported} progress={busy ? null : progress}
+        onClose={() => { setError(null); setVerify(null); setExported(null); setProgress(null); }} />
       {!session || !review ? (
         <main className="empty">
           {busy && progress ? (
@@ -215,10 +231,11 @@ function recallFolder(): string | null {
   try { return localStorage.getItem(LAST_KEY); } catch { return null; }
 }
 
-function Banners({ error, verify, progress, onClose }: {
-  error: ApiError | null; verify: VerifyResult | null; progress: Progress | null; onClose: () => void;
+function Banners({ error, verify, exported, progress, onClose }: {
+  error: ApiError | null; verify: VerifyResult | null; exported: ExportResult | null; progress: Progress | null;
+  onClose: () => void;
 }) {
-  if (!error && !verify && !progress?.failed.length) return null;
+  if (!error && !verify && !exported && !progress?.failed.length) return null;
   return (
     <div style={{ display: "grid", gap: 6, paddingBottom: 8, borderBottom: "1px solid var(--paper-rule)" }}>
       {error && (
@@ -238,6 +255,14 @@ function Banners({ error, verify, progress, onClose }: {
             ? `Jejak audit utuh: ${verify.entries} catatan berantai, ${verify.pages_checked} hasil OCR cocok dengan hash-nya.`
             : "Jejak audit TIDAK utuh:"}
           {verify.problems.map((p) => <span key={p} className="hint">{p}</span>)}
+        </div>
+      )}
+      {exported && (
+        <div className="note note-ok" role="status">
+          Excel diexport: {exported.pages} foto, {exported.confirmed} dikonfirmasi
+          {exported.pages > exported.confirmed && ` (${exported.pages - exported.confirmed} belum dicek, ditandai di kolom Status)`}.
+          Hash file dicatat di jejak audit.
+          {exported.files.map((f) => <span key={f.path} className="hint mono">{f.path}</span>)}
         </div>
       )}
       <div style={{ padding: "0 18px" }}><button className="link" onClick={onClose}>Tutup pesan</button></div>

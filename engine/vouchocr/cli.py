@@ -63,6 +63,9 @@ def build_parser() -> argparse.ArgumentParser:
     uc.add_argument("--reason", required=True)
     uc.add_argument("--actor")
 
+    ex = sub.add_parser("export", help="Tulis Excel + JSON ke <folder kerja>/export (hash dicatat di jejak audit).")
+    ex.add_argument("--workspace", "-w", type=Path, required=True)
+
     ve = sub.add_parser("verify", help="Periksa rantai jejak audit dan hasil OCR.")
     ve.add_argument("--workspace", "-w", type=Path, required=True)
     return p
@@ -94,6 +97,10 @@ def main(argv: list[str] | None = None) -> int:
             _emit({"type": "saved", "entry": ws.confirm(args.page, actor=args.actor)})
         elif args.cmd == "unconfirm":
             _emit({"type": "saved", "entry": ws.unconfirm(args.page, args.reason, actor=args.actor)})
+        elif args.cmd == "export":
+            from .export import export
+
+            _emit(export(ws))
         elif args.cmd == "verify":
             result = ws.verify()
             _emit(result)

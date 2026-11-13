@@ -1,5 +1,5 @@
 import type { Session } from "../api/types";
-import { ChainIcon, FolderIcon, ScanIcon } from "./icons";
+import { ChainIcon, FolderIcon, ScanIcon, SheetIcon } from "./icons";
 
 interface Props {
   session: Session | null;
@@ -8,9 +8,10 @@ interface Props {
   onChoose: () => void;
   onProcess: () => void;
   onVerify: () => void;
+  onExport: () => void;
 }
 
-export function TopBar({ session, busy, demo, onChoose, onProcess, onVerify }: Props) {
+export function TopBar({ session, busy, demo, onChoose, onProcess, onVerify, onExport }: Props) {
   return (
     <header className="topbar">
       <div className="wordmark">Meja Vouching<span>.</span></div>
@@ -21,6 +22,7 @@ export function TopBar({ session, busy, demo, onChoose, onProcess, onVerify }: P
       <button className="btn" onClick={onChoose} disabled={busy}><FolderIcon />Pilih folder</button>
       <button className="btn" onClick={onProcess} disabled={busy || !session}><ScanIcon />Proses foto</button>
       <button className="btn" onClick={onVerify} disabled={busy || !session}><ChainIcon />Periksa jejak audit</button>
+      <button className="btn" onClick={onExport} disabled={busy || !session}><SheetIcon />Export Excel</button>
     </header>
   );
 }

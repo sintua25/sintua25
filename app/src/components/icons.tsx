@@ -13,6 +13,10 @@ export const ChainIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true" {...base}><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></svg>
 );
 
+export const SheetIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" {...base}><path d="M5.5 4h9l4 4v10.5A1.5 1.5 0 0 1 17 20H5.5A1.5 1.5 0 0 1 4 18.5v-13A1.5 1.5 0 0 1 5.5 4ZM4 11h14.5M4 15.5h14.5M9.5 11v9" /></svg>
+);
+
 export function Tick({ draw = false, size = 18 }: { draw?: boolean; size?: number }) {
   return (
     <svg className={`tick${draw ? " draw" : ""}`} width={size} height={size} viewBox="0 0 24 24" aria-hidden="true"

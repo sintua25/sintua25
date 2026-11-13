@@ -15,13 +15,16 @@ Urutan kerja. Setiap fase berhenti untuk review.
 - [x] Pilih folder, proses (progres dari JSON Lines), review, koreksi, tambah nilai, konfirmasi, verify
 - [x] Pratinjau gambar lewat asset protocol, kotak OCR di atas foto (diuji di path Unicode + spasi)
 - [x] Buka folder dari argumen baris perintah; "Buka lagi" folder terakhir
-- [ ] Uji `npm run tauri dev` di Windows (alur penuh + `vouchocr verify`)
+- [x] Uji `npm run tauri dev` di Windows (2026-11-13, 208 foto asli; perlu Python 3.12, bukan 3.15)
 - [ ] Mesin Python dibundel sebagai sidecar (installer tanpa instal Python terpisah)
 
 ## Fase 2: Ekspor
-- [ ] JSON gabungan + koreksi, alasan, status review
-- [ ] Excel: satu sheet per folder sumber; nilai asli / nilai akhir / status / alasan
-- [ ] Atomik, SHA-256 hasil dicatat di jejak audit
+- [x] JSON gabungan + koreksi, alasan, status review (`vouchocr export`, tombol "Export Excel")
+- [x] Excel: Ringkasan (satu baris per foto), Detail (nilai asli / akhir / alasan), Jejak audit, Info.
+      Satu file per folder kerja (= satu folder sumber), bukan satu sheet per folder.
+- [x] Atomik, nama berwaktu (tidak menimpa), SHA-256 dicatat di jejak audit; ditolak kalau jejak audit putus
+- [x] Nominal utama hanya diisi kalau tidak ambigu; selain itu kosong + ditandai (mesin tidak menebak)
+- [ ] Tombol "Buka file" langsung dari aplikasi (perlu plugin opener)
 
 ## Fase 3: Filing
 - [ ] `samples.py` baca List_Filling.xlsx, konfigurasi per sheet di YAML/JSON

@@ -115,3 +115,22 @@ def test_comma_read_as_dot_is_guessed_and_flagged():
 def test_greek_lookalikes_normalized():
     fields, _ = extract([L("Total Rρ 1.500")])
     assert kinds(fields, "amount")[0].value == "1500"
+
+
+def test_amount_in_sentence_with_magnitude_word_is_not_a_value():
+    # Catatan kaki PO: "total value more than IDR 1 Million" bukan nominal transaksi.
+    fields, flags = extract([
+        L("Total", y=200, x=50, w=100),
+        L("Rp 13.400.000,00", y=202, x=600, w=200),
+        L("All invoices that has total value more than IDR 1 Million must use a legal stamp", y=400),
+        L("Denda Rp 5 juta per hari", y=440),
+        L("Biaya 2,5 jt", y=480),
+    ])
+    assert [(f.value, f.label) for f in kinds(fields, "amount")] == [("13400000.00", "total")]
+    assert not any(f["code"] == "MULTIPLE_TOTALS" for f in flags)
+
+
+def test_magnitude_word_must_be_a_whole_word():
+    # "Rp 1.500 rbt" bukan "ribu"; "jtx" bukan "jt": nominal tetap dibaca.
+    fields, _ = extract([L("Rp 1.500.000 jtx"), L("Total Rp 2.000.000 Jumlah", y=40)])
+    assert [f.value for f in kinds(fields, "amount")] == ["1500000", "2000000"]

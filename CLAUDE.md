@@ -39,6 +39,7 @@ python -m pytest -q -m "not ocr"                      # tes cepat saja
 python bench/bench_synthetic.py                       # akurasi di 72 foto sintetis rusak
 vouchocr process "<folder foto>" -w "<folder kerja>"
 vouchocr verify -w "<folder kerja>"
+vouchocr export -w "<folder kerja>"                   # Excel + JSON ke <folder kerja>/export
 ```
 
 Aplikasi desktop (`app/`, Tauri 2 + React + TS):
@@ -70,6 +71,7 @@ Panduan untuk pemilik produk: `docs/MENJALANKAN.md`.
 | `money.py`, `ids.py` | parse nominal ke Decimal; kunci kanonik nomor dokumen (O->0, I->1, L->1) |
 | `audit.py` | log append-only berantai hash + `audit.head` |
 | `workspace.py` | folder kerja: proses, koreksi, konfirmasi, state, verify |
+| `export.py` | Excel (openpyxl) + JSON; atomik, hash dicatat di jejak audit; nominal utama tidak ditebak |
 | `cli.py` | antarmuka JSON Lines untuk aplikasi desktop |
 
 ## Peta kode (`app/`)

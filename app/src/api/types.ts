@@ -81,6 +81,13 @@ export interface VerifyResult {
   problems: string[];
 }
 
+export interface ExportResult {
+  /** Path lengkap file JSON dan Excel, beserta SHA-256 yang dicatat di jejak audit. */
+  files: { path: string; sha256: string }[];
+  pages: number;
+  confirmed: number;
+}
+
 export interface Session {
   source: string;
   workspace: string;
