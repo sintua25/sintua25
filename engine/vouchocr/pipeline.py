@@ -41,11 +41,44 @@ def process_unit(unit: Unit, backend: OcrBackend) -> tuple[dict, bytes | None]:
     else:
         image, render, size = unit.load()
         page = _ocr_page(image, size, unit.key, unit.rel, backend, t0)
-    page["source_kind"] = unit.kind
-    page["image"] = f"renders/{unit.key}.png" if render is not None else None
-    for note in unit.notes:
+    return finish_unit_page(page, unit.kind, unit.key, unit.notes, render is not None), render
+
+
+def finish_unit_page(page: dict, kind: str, key: str, notes: list[str], has_render: bool) -> dict:
+    page["source_kind"] = kind
+    page["image"] = f"renders/{key}.png" if has_render else None
+    for note in notes:
         page["flags"].append(flag("MEDIA_SKIPPED", detail=note))
-    return page, render
+    return page
+
+
+# --- pekerja OCR paralel -----------------------------------------------------------
+# Satu proses per pekerja, masing-masing memuat model sendiri sekali. Tugas dikirim
+# sebagai tuple sederhana supaya bisa dipickle (Windows memakai "spawn").
+
+_WORKER_BACKEND: OcrBackend | None = None
+
+
+def init_worker(threads: int) -> None:
+    global _WORKER_BACKEND
+    from .ocr import RapidOcrBackend
+
+    _WORKER_BACKEND = RapidOcrBackend(threads=threads)
+
+
+def run_task(task: tuple, backend: OcrBackend | None = None) -> dict:
+    """("photo", path, rel, sha) atau ("array", image, size, key, rel, kind, notes, has_render)."""
+    backend = backend or _WORKER_BACKEND
+    if task[0] == "photo":
+        _, path, rel, sha = task
+        page = process_image(Path(path), backend, rel=rel)
+        if page["sha256"] != sha:
+            from .preprocess import ImageLoadError
+            raise ImageLoadError(f"'{rel}' berubah saat sedang dibaca. Tunggu sinkronisasi selesai, lalu proses ulang.")
+        return page
+    _, image, size, key, rel, kind, notes, has_render = task
+    page = _ocr_page(image, size, key, rel, backend, time.perf_counter())
+    return finish_unit_page(page, kind, key, notes, has_render)
 
 
 def _ocr_page(image, size, sha: str, rel: str, backend: OcrBackend, t0: float) -> dict:

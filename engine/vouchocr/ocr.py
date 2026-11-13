@@ -35,16 +35,20 @@ class OcrBackend(Protocol):
 class RapidOcrBackend:
     """PaddleOCR (PP-OCR) dalam format ONNX lewat RapidOCR. Model ikut terpasang di paket."""
 
-    def __init__(self) -> None:
+    def __init__(self, threads: int | None = None) -> None:
         self._engine = None
         self.name = "rapidocr"
+        self.threads = threads  # None = onnxruntime memilih sendiri (semua core)
 
     def _get(self):
         if self._engine is None:
             from rapidocr import RapidOCR  # impor lambat: ~1 dtk, tidak perlu saat tes unit
 
-            self._engine = RapidOCR(params={"Global.log_level": "error", "Global.max_side_len": 3000,
-                                             "Det.box_thresh": DET_BOX_THRESH})
+            params = {"Global.log_level": "error", "Global.max_side_len": 3000, "Det.box_thresh": DET_BOX_THRESH}
+            if self.threads:
+                params["EngineConfig.onnxruntime.intra_op_num_threads"] = self.threads
+                params["EngineConfig.onnxruntime.inter_op_num_threads"] = 1
+            self._engine = RapidOCR(params=params)
             logging.getLogger("RapidOCR").setLevel(logging.ERROR)
             import rapidocr
             self.name = f"rapidocr {getattr(rapidocr, '__version__', '?')}"

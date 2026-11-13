@@ -178,6 +178,7 @@ export function App({ api }: { api: Api }) {
         {busy && progress && <div style={{ width: `${pct}%` }} />}
       </div>
       <Banners error={error} verify={verify} exported={exported} progress={busy ? null : progress}
+        onOpenOutput={session && api.mode === "desktop" ? () => { api.openOutput(session).catch((e) => setError(asError(e))); } : undefined}
         onClose={() => { setError(null); setVerify(null); setExported(null); setProgress(null); }} />
       {!session || !review ? (
         <main className="empty">
@@ -238,9 +239,9 @@ function recallFolder(): string | null {
   try { return localStorage.getItem(LAST_KEY); } catch { return null; }
 }
 
-function Banners({ error, verify, exported, progress, onClose }: {
+function Banners({ error, verify, exported, progress, onClose, onOpenOutput }: {
   error: ApiError | null; verify: VerifyResult | null; exported: ExportResult | null; progress: Progress | null;
-  onClose: () => void;
+  onClose: () => void; onOpenOutput?: () => void;
 }) {
   if (!error && !verify && !exported && !progress?.failed.length) return null;
   return (
@@ -270,6 +271,7 @@ function Banners({ error, verify, exported, progress, onClose }: {
           {exported.pages > exported.confirmed && ` (${exported.pages - exported.confirmed} belum dicek, ditandai di kolom Status)`}.
           Hash file dicatat di jejak audit.
           {exported.files.map((f) => <span key={f.path} className="hint mono">{f.path}</span>)}
+          {onOpenOutput && <span className="hint"><button className="link" onClick={onOpenOutput}>Buka folder hasil</button></span>}
         </div>
       )}
       <div style={{ padding: "0 18px" }}><button className="link" onClick={onClose}>Tutup pesan</button></div>

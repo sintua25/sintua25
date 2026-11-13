@@ -41,4 +41,7 @@ export const tauriApi: Api = {
   },
   verify: (s) => invoke<VerifyResult>("verify", { workspace: s.workspace }),
   exportFiles: (s) => invoke<ExportResult>("export_files", { workspace: s.workspace }),
+  async openOutput(s) {
+    await invoke("open_output", { workspace: s.workspace });
+  },
 };

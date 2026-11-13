@@ -23,19 +23,22 @@ impl ApiError {
     }
 }
 
-const INSTALL_HINT: &str = "Pasang mesin OCR sekali saja: buka folder engine, jalankan \
-`python -m venv .venv` lalu `.venv\\Scripts\\pip install -e .`. \
-Atau isi variabel VOUCHOCR_PYTHON dengan lokasi python yang sudah berisi vouchocr.";
+const INSTALL_HINT: &str = "Kalau memakai installer: pasang ulang Meja Vouching dari file setup. \
+Kalau dari kode: di folder engine jalankan `.venv\\Scripts\\python.exe -m pip install -e \".[dev]\"`.";
 
 pub struct Engine {
     python: PathBuf,
 }
 
 impl Engine {
-    /// Urutan: VOUCHOCR_PYTHON, venv engine di repo (mode pengembangan), python di PATH.
+    /// Urutan: VOUCHOCR_PYTHON, Python bawaan installer (`<folder program>\\python`),
+    /// venv engine di repo (mode pengembangan), python di PATH.
     pub fn locate() -> Self {
         if let Some(p) = std::env::var_os("VOUCHOCR_PYTHON") {
             return Self { python: PathBuf::from(p) };
+        }
+        if let Some(bundled) = bundled_python() {
+            return Self { python: bundled };
         }
         let repo_venv = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..").join("engine").join(".venv");
         let candidate = if cfg!(windows) {
@@ -127,6 +130,13 @@ fn crashed(stderr: &str) -> ApiError {
     if stderr.contains("No module named vouchocr") {
         return ApiError::new("ENGINE_MISSING", "Python ada, tapi mesin OCR (vouchocr) belum terpasang.", INSTALL_HINT);
     }
+    // Paket pendukung (openpyxl, pypdfium2, ...) belum terpasang: biasanya setelah update kode.
+    if let Some(pos) = stderr.find("No module named ") {
+        let name: String = stderr[pos + 16..].chars().take_while(|c| !c.is_whitespace()).collect();
+        return ApiError::new("ENGINE_INCOMPLETE",
+            format!("Paket {} untuk mesin OCR belum terpasang.", name.trim_matches(|c| c == '\'' || c == '"')),
+            INSTALL_HINT);
+    }
     let tail: Vec<&str> = stderr.lines().rev().take(6).collect::<Vec<_>>().into_iter().rev().collect();
     ApiError::new(
         "ENGINE_CRASHED",
@@ -137,6 +147,13 @@ fn crashed(stderr: &str) -> ApiError {
 
 /// Nama folder kerja: nama folder sumber + sidik 8 heksa dari path lengkapnya,
 /// supaya dua folder bernama sama di tempat berbeda tidak tercampur.
+/// Python yang ikut di installer, di sebelah file .exe aplikasi.
+fn bundled_python() -> Option<PathBuf> {
+    let dir = std::env::current_exe().ok()?.parent()?.to_path_buf();
+    let exe = if cfg!(windows) { dir.join("python").join("python.exe") } else { dir.join("python").join("bin").join("python3") };
+    exe.is_file().then_some(exe)
+}
+
 /// Folder program: akar repo saat pengembangan (berisi `engine/`), atau folder file .exe.
 pub fn program_dir() -> PathBuf {
     let repo = Path::new(env!("CARGO_MANIFEST_DIR")).join("..").join("..");
@@ -218,6 +235,13 @@ mod tests {
     fn verify_failure_is_a_result_not_an_error() {
         let v = interpret(r#"{"type":"verify","ok":false,"problems":["x"]}"#, "", false).unwrap();
         assert_eq!(v["ok"], false);
+    }
+
+    #[test]
+    fn missing_dependency_explained() {
+        let e = interpret("", "  import pypdfium2\nModuleNotFoundError: No module named 'pypdfium2'", false).unwrap_err();
+        assert_eq!(e.code, "ENGINE_INCOMPLETE");
+        assert!(e.message.contains("pypdfium2") && !e.message.contains('\''));
     }
 
     #[test]

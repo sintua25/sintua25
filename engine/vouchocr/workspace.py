@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import re
 import time
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Iterator
@@ -23,11 +24,21 @@ from .ids import canon_doc_id
 from .money import AmountError, parse_amount
 from .ocr import OcrBackend
 from .documents import IMAGE_SUFFIXES, expand, file_sha, read_source
-from .pipeline import SCHEMA, find_images, process_image, process_unit
+from .documents import Unit
+from .pipeline import SCHEMA, find_images, init_worker, process_unit, run_task
 from .preprocess import ImageLoadError
 from .storage import atomic_write_bytes, dump_json, sha256_file
 
 KINDS = ("doc_id", "amount", "date")
+
+
+@dataclass
+class _Job:
+    rel: str                       # nama yang tampil (foto, atau "file.pdf#hal2")
+    key: str                       # ID halaman
+    source_sha: str                # SHA-256 file sumber
+    task: tuple | None = None      # foto: tugas OCR siap kirim
+    unit: Unit | None = None       # halaman PDF/Word
 
 
 class WorkspaceError(Exception):
@@ -93,84 +104,176 @@ class Workspace:
 
     # --- proses OCR -----------------------------------------------------------
 
-    def process(self, backend: OcrBackend, force: bool = False) -> Iterator[dict]:
-        """Proses semua foto. Menghasilkan event satu per satu (untuk progres di UI).
-        Foto yang sudah diproses dengan versi mesin yang sama dilewati, jadi proses
-        yang terputus bisa dilanjutkan."""
+    def process(self, backend: OcrBackend, force: bool = False, workers: int = 1) -> Iterator[dict]:
+        """Proses semua foto/halaman. Menghasilkan event satu per satu (untuk progres di UI).
+        Halaman yang sudah diproses dengan versi mesin yang sama dilewati, jadi proses
+        yang terputus bisa dilanjutkan. `workers` > 1: beberapa halaman dibaca bersamaan,
+        masing-masing di proses sendiri (lihat perf.py); hasil tetap ditulis satu per satu
+        di sini, jadi jejak audit tetap berurutan."""
         source = Path(self.meta()["source"])
-        images = find_images(source)
         index = self.index()
         reviewed = {e["target"][5:].partition("/")[0] for e in self.audit.entries()
                     if e["action"] in ("correct", "add_field", "confirm", "unconfirm")}
-        yield {"type": "start", "source": str(source), "total": len(images)}
-        ok = skipped = failed = 0
-        t0 = time.perf_counter()
-        for n, path in enumerate(images, 1):
+
+        # 1. Daftar semua halaman dulu (cepat: hash foto, jumlah halaman PDF), supaya
+        #    progres dihitung per halaman dan tidak mundur saat dikerjakan paralel.
+        jobs: list[_Job] = []
+        scan_errors: list[dict] = []
+        for path in find_images(source):
             rel = path.relative_to(source).as_posix()
             try:
                 if path.suffix.lower() in IMAGE_SUFFIXES:
                     sha = sha256_file(path)
-                    jobs = [(rel, sha, lambda path=path, rel=rel, sha=sha: self._photo(path, rel, sha, backend))]
+                    jobs.append(_Job(rel, sha, sha, task=("photo", str(path), rel, sha)))
                 else:
                     data = read_source(path)
                     sha = file_sha(data)
-                    jobs = [(u.rel, u.key, lambda u=u: process_unit(u, backend))
-                            for u in expand(path, rel, data, sha)]
+                    jobs.extend(_Job(u.rel, u.key, sha, unit=u) for u in expand(path, rel, data, sha))
                     for old in [k for k in index if k == rel or k.startswith(rel + "#")]:
                         del index[old]  # file berubah (jumlah halaman beda): buang entri lama
             except ImageLoadError as e:
-                failed += 1
-                yield {"type": "error", "n": n, "file": rel, "code": "IMAGE_UNREADABLE", "message": str(e),
-                       "hint": "File ini dilewati; file lain tetap diproses."}
+                scan_errors.append({"type": "error", "file": rel, "code": "IMAGE_UNREADABLE", "message": str(e),
+                                    "hint": "File ini dilewati; file lain tetap diproses."})
+
+        if workers <= 0:  # otomatis sesuai CPU dan RAM laptop ini
+            from .perf import plan
+
+            workers = plan(len(jobs)).workers
+        yield {"type": "start", "source": str(source), "total": len(jobs) + len(scan_errors), "workers": workers}
+        n = ok = skipped = failed = 0
+        t0 = time.perf_counter()
+        for err in scan_errors:
+            n += 1
+            failed += 1
+            yield {**err, "n": n}
+
+        # 2. Lewati yang sudah ada.
+        todo: list[_Job] = []
+        duplicates: list[_Job] = []   # isi persis sama dengan file lain: cukup dibaca sekali
+        for job in jobs:
+            if any(t.key == job.key for t in todo):
+                duplicates.append(job)
                 continue
-            for unit_rel, key, run in jobs:
-                try:
-                    page_path = self.pages_dir / f"{key}.json"
-                    if page_path.exists() and key in reviewed:
-                        # Koreksi menunjuk ke nilai hasil OCR ini; menimpanya memutus jejak.
-                        index[unit_rel] = key
-                        skipped += 1
-                        yield {"type": "skipped", "n": n, "file": unit_rel, "sha256": key, "reason": "sudah direview"}
-                        continue
-                    if not force and page_path.exists() and self._page_engine(page_path) == __version__:
-                        index[unit_rel] = key
-                        skipped += 1
-                        yield {"type": "skipped", "n": n, "file": unit_rel, "sha256": key, "reason": "sudah diproses"}
-                        continue
-                    page, render = run()
-                    rec = {"file": unit_rel}
-                    if render is not None:
-                        rec["render_sha256"] = atomic_write_bytes(self.root / page["image"], render)
-                    if key != sha:
-                        rec["source_sha256"] = sha
-                    rec["result_sha256"] = atomic_write_bytes(page_path, dump_json(page))
-                    rec["engine"] = page["engine"]
-                    index[unit_rel] = key
-                    self._save_index(index)
-                    self.audit.append("process", f"page:{key}", data=rec)
-                    ok += 1
-                    yield {"type": "page", "n": n, "file": unit_rel, "sha256": key,
-                           "fields": len(page["fields"]), "flags": [f["code"] for f in page["flags"]],
-                           "elapsed_ms": page["elapsed_ms"]}
-                except ImageLoadError as e:
-                    failed += 1
-                    yield {"type": "error", "n": n, "file": unit_rel, "code": "IMAGE_UNREADABLE", "message": str(e),
-                           "hint": "File ini dilewati; file lain tetap diproses."}
-                except Exception as e:  # satu halaman bermasalah tidak boleh menghentikan semuanya
-                    failed += 1
-                    yield {"type": "error", "n": n, "file": unit_rel, "code": "OCR_FAILED",
-                           "message": f"OCR gagal untuk '{unit_rel}': {type(e).__name__}: {e}",
-                           "hint": "Halaman ini dilewati. Coba proses ulang; kalau tetap gagal, laporkan nama filenya."}
+            page_path = self.pages_dir / f"{job.key}.json"
+            reason = None
+            if page_path.exists() and job.key in reviewed:
+                reason = "sudah direview"  # koreksi menunjuk ke hasil OCR ini; menimpanya memutus jejak
+            elif not force and page_path.exists() and self._page_engine(page_path) == __version__:
+                reason = "sudah diproses"
+            if reason:
+                index[job.rel] = job.key
+                n += 1
+                skipped += 1
+                yield {"type": "skipped", "n": n, "file": job.rel, "sha256": job.key, "reason": reason}
+            else:
+                todo.append(job)
+
+        # 3. Kerjakan: teks Word langsung, sisanya OCR (paralel kalau workers > 1).
+        for job, result in self._run(todo, backend, workers):
+            n += 1
+            try:
+                if isinstance(result, BaseException):
+                    raise result
+                page, render = result
+                rec = {"file": job.rel}
+                if render is not None:
+                    rec["render_sha256"] = atomic_write_bytes(self.root / page["image"], render)
+                if job.key != job.source_sha:
+                    rec["source_sha256"] = job.source_sha
+                rec["result_sha256"] = atomic_write_bytes(self.pages_dir / f"{job.key}.json", dump_json(page))
+                rec["engine"] = page["engine"]
+                index[job.rel] = job.key
+                self._save_index(index)
+                self.audit.append("process", f"page:{job.key}", data=rec)
+                ok += 1
+                yield {"type": "page", "n": n, "file": job.rel, "sha256": job.key,
+                       "fields": len(page["fields"]), "flags": [f["code"] for f in page["flags"]],
+                       "elapsed_ms": page["elapsed_ms"]}
+            except ImageLoadError as e:
+                failed += 1
+                yield {"type": "error", "n": n, "file": job.rel, "code": "IMAGE_UNREADABLE", "message": str(e),
+                       "hint": "File ini dilewati; file lain tetap diproses."}
+            except Exception as e:  # satu halaman bermasalah tidak boleh menghentikan semuanya
+                failed += 1
+                yield {"type": "error", "n": n, "file": job.rel, "code": "OCR_FAILED",
+                       "message": f"OCR gagal untuk '{job.rel}': {type(e).__name__}: {e}",
+                       "hint": "Halaman ini dilewati. Coba proses ulang; kalau tetap gagal, laporkan nama filenya."}
+        for job in duplicates:
+            n += 1
+            if (self.pages_dir / f"{job.key}.json").exists():
+                index[job.rel] = job.key
+                skipped += 1
+                yield {"type": "skipped", "n": n, "file": job.rel, "sha256": job.key, "reason": "sama dengan file lain"}
+            else:
+                failed += 1
+                yield {"type": "error", "n": n, "file": job.rel, "code": "OCR_FAILED",
+                       "message": f"'{job.rel}' sama persis dengan file lain yang gagal dibaca.",
+                       "hint": "Lihat galat file kembarannya di atas."}
         self._save_index(index)
         yield {"type": "done", "processed": ok, "skipped": skipped, "failed": failed,
                "elapsed_s": round(time.perf_counter() - t0, 1)}
 
     @staticmethod
-    def _photo(path: Path, rel: str, sha: str, backend: OcrBackend) -> tuple[dict, None]:
-        page = process_image(path, backend, rel=rel)
-        if page["sha256"] != sha:
-            raise ImageLoadError(f"'{rel}' berubah saat sedang dibaca. Tunggu sinkronisasi selesai, lalu proses ulang.")
-        return page, None
+    def _run(todo: list["_Job"], backend: OcrBackend, workers: int):
+        """Hasilkan (job, (page, render) atau galat) satu per satu, urutan selesai."""
+        def prepare(job: _Job):
+            """-> (tugas OCR atau None, hasil langsung, gambar halaman)."""
+            if job.task is not None:
+                return job.task, None, None
+            u = job.unit
+            if u.load is None:  # teks Word: tanpa OCR
+                return None, process_unit(u, backend), None
+            image, render, size = u.load()
+            return ("array", image, size, u.key, u.rel, u.kind, u.notes, True), None, render
+
+        if workers <= 1:
+            for job in todo:
+                try:
+                    task, direct, render = prepare(job)
+                    yield job, direct if task is None else (run_task(task, backend), render)
+                except Exception as e:
+                    yield job, e
+            return
+
+        from concurrent.futures import FIRST_COMPLETED, ProcessPoolExecutor, wait
+
+        from .perf import plan
+
+        threads = plan(len(todo), override=workers).threads
+        pending: dict = {}
+        queue = list(todo)
+        import multiprocessing
+
+        # "spawn" di semua sistem: sama dengan Windows, dan aman untuk onnxruntime yang ber-thread.
+        ctx = multiprocessing.get_context("spawn")
+        with ProcessPoolExecutor(max_workers=workers, mp_context=ctx, initializer=init_worker,
+                                 initargs=(threads,)) as pool:
+            try:
+                while queue or pending:
+                    # Antrean dibatasi supaya gambar halaman PDF tidak menumpuk di RAM.
+                    while queue and len(pending) < workers * 2:
+                        job = queue.pop(0)
+                        try:
+                            task, direct, render = prepare(job)
+                        except Exception as e:
+                            yield job, e
+                            continue
+                        if task is None:
+                            yield job, direct
+                            continue
+                        pending[pool.submit(run_task, task)] = (job, render)
+                    if not pending:
+                        continue
+                    done, _ = wait(pending, return_when=FIRST_COMPLETED)
+                    for fut in done:
+                        job, render = pending.pop(fut)
+                        try:
+                            yield job, (fut.result(), render)
+                        except Exception as e:
+                            yield job, e
+            except BaseException:
+                pool.shutdown(wait=False, cancel_futures=True)
+                raise
 
     def index(self) -> dict[str, str]:
         try:

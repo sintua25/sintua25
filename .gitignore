@@ -23,3 +23,4 @@ app/src-tauri/gen/
 
 # Hasil kerja pengguna (folder kerja, Excel) tidak masuk repo
 Output OCR/
+build/

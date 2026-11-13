@@ -69,7 +69,7 @@ def test_workspace_processes_mixed_folder(mixed, tmp_path):
     before = snapshot(mixed)
     ws = Workspace.open_for(mixed, tmp_path / "kerja")
     events = list(ws.process(FakeBackend()))
-    assert events[0]["total"] == 5  # foto, 2 pdf, docx, doc; file ~$ dilewati
+    assert events[0]["total"] == 7  # per halaman: foto 1, pdf 2+1, docx 2, doc (galat) 1; file ~$ dilewati
     files = sorted(e["file"] for e in events if e["type"] == "page")
     assert files == ["dua halaman.pdf#hal1", "dua halaman.pdf#hal2", "foto.jpg", "memo.docx#gambar1",
                      "memo.docx#teks", "satu.pdf"]
@@ -127,3 +127,19 @@ def test_real_ocr_reads_pdf_page(tmp_path):
     [page] = ws.state()["pages"]
     got = {(f["kind"], f["value"]) for f in page["fields"]}
     assert {("doc_id", "KW-2024/0815"), ("amount", "12450000.00"), ("date", "2024-03-12")} <= got
+
+
+@pytest.mark.ocr
+def test_parallel_matches_sequential(mixed, tmp_path):
+    """Dua pekerja paralel memberi hasil persis sama dengan satu per satu, dan progres tidak mundur."""
+    from vouchocr.ocr import RapidOcrBackend
+
+    results = {}
+    for workers in (1, 2):
+        ws = Workspace.open_for(mixed, tmp_path / f"kerja{workers}")
+        events = list(ws.process(RapidOcrBackend(), workers=workers))
+        ns = [e["n"] for e in events if "n" in e]
+        assert ns == list(range(1, len(ns) + 1)) and len(ns) == events[0]["total"]
+        assert ws.verify()["ok"]
+        results[workers] = {p["files"][0]: [(f["kind"], f["value"]) for f in p["fields"]] for p in ws.state()["pages"]}
+    assert results[1] == results[2]

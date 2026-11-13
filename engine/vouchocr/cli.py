@@ -27,6 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("source", type=Path)
     pr.add_argument("--workspace", "-w", type=Path, required=True)
     pr.add_argument("--force", action="store_true", help="Proses ulang foto yang belum direview.")
+    pr.add_argument("--workers", type=int, default=0,
+                    help="Jumlah foto dibaca bersamaan (0 = otomatis sesuai CPU dan RAM).")
 
     st = sub.add_parser("state", help="Kondisi review saat ini (JSON).")
     st.add_argument("--workspace", "-w", type=Path, required=True)
@@ -79,7 +81,7 @@ def main(argv: list[str] | None = None) -> int:
             from .ocr import RapidOcrBackend
 
             ws = Workspace.open_for(args.source, args.workspace)
-            for event in ws.process(RapidOcrBackend(), force=args.force):
+            for event in ws.process(RapidOcrBackend(), force=args.force, workers=args.workers):
                 _emit(event)
             return 0
 

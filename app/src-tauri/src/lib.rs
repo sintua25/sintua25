@@ -151,12 +151,28 @@ async fn export_files(workspace: String) -> Result<Value, ApiError> {
     blocking(call(vec!["export".into(), "-w".into(), workspace])).await
 }
 
+/// Buka folder hasil (folder kerja) di File Explorer. Hanya folder di dalam "Output OCR".
+#[tauri::command]
+fn open_output(workspace: String) -> Result<(), ApiError> {
+    let root = program_dir().join("Output OCR");
+    let target = PathBuf::from(&workspace);
+    let target = if target.is_dir() { target } else { root.clone() };
+    let inside = target.canonicalize().ok().zip(root.canonicalize().ok()).is_some_and(|(t, r)| t.starts_with(r));
+    if !inside {
+        return Err(ApiError::new("NOT_OUTPUT", "Folder itu bukan folder hasil Meja Vouching.", ""));
+    }
+    let opener = if cfg!(windows) { "explorer" } else if cfg!(target_os = "macos") { "open" } else { "xdg-open" };
+    std::process::Command::new(opener).arg(&target).spawn().map(|_| ()).map_err(|e| {
+        ApiError::new("OPEN_FAILED", format!("Folder tidak bisa dibuka: {e}"), format!("Buka manual: {}", target.display()))
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
-            startup_source, open_source, process, review_state, page_detail, correct, add_field, confirm, unconfirm, verify, export_files
+            startup_source, open_source, process, review_state, page_detail, correct, add_field, confirm, unconfirm, verify, export_files, open_output
         ])
         .run(tauri::generate_context!())
         .expect("gagal menjalankan Meja Vouching");

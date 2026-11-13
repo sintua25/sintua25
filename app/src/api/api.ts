@@ -21,4 +21,6 @@ export interface Api {
   verify(session: Session): Promise<VerifyResult>;
   /** Tulis Excel + JSON ke folder kerja; hash file dicatat di jejak audit. */
   exportFiles(session: Session): Promise<ExportResult>;
+  /** Buka folder hasil (Output OCR) di File Explorer. */
+  openOutput(session: Session): Promise<void>;
 }

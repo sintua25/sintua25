@@ -101,6 +101,7 @@ export function createDemoApi(): Api {
       p.status = "belum_dicek";
     },
     verify: async () => ({ ok: true, entries: seq, pages_checked: pages.length, last_hash: "demo", problems: [] }),
+    openOutput: async () => undefined, // mode demo tidak punya folder hasil
     // Mode demo tidak menulis file; hanya menunjukkan bentuk hasilnya.
     exportFiles: async (s) => ({
       files: [
