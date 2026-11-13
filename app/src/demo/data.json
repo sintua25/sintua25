@@ -1,0 +1,1238 @@
+{
+ "source": "C:\\Audit\\PT Klien Jaya\\Kas Maret 2024",
+ "pages": [
+  {
+   "sha256": "4e9760475432a9372369e14966cfadbebc4b6ef2615af6985af43d2f30e980c4",
+   "files": [
+    "01 kwitansi konsultasi.jpg"
+   ],
+   "flags": [],
+   "status": "belum_dicek",
+   "fields": [
+    {
+     "kind": "doc_id",
+     "value": "KW-2024/0815",
+     "key": "KW20240815",
+     "raw": "KW-2024/0815",
+     "line": 1,
+     "label": "nomor",
+     "score": 0.9952,
+     "flags": [],
+     "id": 0,
+     "original": "KW-2024/0815",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "date",
+     "value": "2024-03-12",
+     "key": "2024-03-12",
+     "raw": "12/03/2024",
+     "line": 2,
+     "label": "tanggal",
+     "score": 0.9798,
+     "flags": [],
+     "id": 1,
+     "original": "2024-03-12",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "12450000.00",
+     "key": "12450000.00",
+     "raw": "Rp 12.450.000,00",
+     "line": 4,
+     "label": "total",
+     "score": 0.9951,
+     "flags": [],
+     "id": 2,
+     "original": "12450000.00",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "doc_id",
+     "value": "INV-00123",
+     "key": "1NV00123",
+     "raw": "INV-00123",
+     "line": 6,
+     "label": "nomor",
+     "score": 0.9934,
+     "flags": [],
+     "id": 3,
+     "original": "INV-00123",
+     "source": "ocr",
+     "history": []
+    }
+   ]
+  },
+  {
+   "sha256": "35928f78f83949b02d69bf74eeff3915d6d1b666343284b0b83c4b0fd14cb6b8",
+   "files": [
+    "02 invoice angkut.jpg"
+   ],
+   "flags": [],
+   "status": "belum_dicek",
+   "fields": [
+    {
+     "kind": "doc_id",
+     "value": "INV/2024/03/0457",
+     "key": "1NV2024030457",
+     "raw": "INV/2024/03/0457",
+     "line": 2,
+     "label": "nomor",
+     "score": 0.9819,
+     "flags": [],
+     "id": 0,
+     "original": "INV/2024/03/0457",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "date",
+     "value": "2024-03-05",
+     "key": "2024-03-05",
+     "raw": "5 Maret 2024",
+     "line": 3,
+     "label": "tanggal",
+     "score": 0.9998,
+     "flags": [],
+     "id": 1,
+     "original": "2024-03-05",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "3200000",
+     "key": "3200000",
+     "raw": "Rp 3.200.000",
+     "line": 6,
+     "label": "",
+     "score": 0.979,
+     "flags": [],
+     "id": 2,
+     "original": "3200000",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "352000",
+     "key": "352000",
+     "raw": "Rp 352.000",
+     "line": 8,
+     "label": "",
+     "score": 0.9996,
+     "flags": [],
+     "id": 3,
+     "original": "352000",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "3552000",
+     "key": "3552000",
+     "raw": "Rp 3.552.000",
+     "line": 10,
+     "label": "total",
+     "score": 0.9991,
+     "flags": [],
+     "id": 4,
+     "original": "3552000",
+     "source": "ocr",
+     "history": []
+    }
+   ]
+  },
+  {
+   "sha256": "b4f2331d4dc99e6900c887ee2fb379943a5975f5f72be34f0672bda32ef7ddb2",
+   "files": [
+    "03 nota bangunan.jpg"
+   ],
+   "flags": [
+    {
+     "code": "MULTIPLE_TOTALS",
+     "message": "Ada lebih dari satu nominal total dengan nilai berbeda.",
+     "values": [
+      "2575000",
+      "2757000"
+     ]
+    }
+   ],
+   "status": "belum_dicek",
+   "fields": [
+    {
+     "kind": "doc_id",
+     "value": "004512",
+     "key": "004512",
+     "raw": "004512",
+     "line": 1,
+     "label": "nomor",
+     "score": 0.9828,
+     "flags": [
+      {
+       "code": "REREAD_DIFFERS",
+       "message": "Pembacaan ulang memberi hasil berbeda dari pembacaan pertama.",
+       "first": "NOTA No.0O4512",
+       "reread": "NOTA No. 004512"
+      }
+     ],
+     "id": 0,
+     "original": "004512",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "date",
+     "value": "2024-02-31",
+     "key": "2024-02-31",
+     "raw": "31/02/2024",
+     "line": 2,
+     "label": "tanggal",
+     "score": 0.9915,
+     "flags": [
+      {
+       "code": "DATE_INVALID",
+       "message": "Tanggal tidak valid di kalender."
+      }
+     ],
+     "id": 1,
+     "original": "2024-02-31",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "1300000",
+     "key": "1300000",
+     "raw": "Rp 1.300.000",
+     "line": 4,
+     "label": "",
+     "score": 0.9893,
+     "flags": [],
+     "id": 2,
+     "original": "1300000",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "1275000",
+     "key": "1275000",
+     "raw": "Rp 1.275.000",
+     "line": 6,
+     "label": "",
+     "score": 0.9636,
+     "flags": [],
+     "id": 3,
+     "original": "1275000",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "2575000",
+     "key": "2575000",
+     "raw": "Rp 2.575.000",
+     "line": 8,
+     "label": "total",
+     "score": 0.9846,
+     "flags": [],
+     "id": 4,
+     "original": "2575000",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "2757000",
+     "key": "2757000",
+     "raw": "Rp2.757.000",
+     "line": 10,
+     "label": "total",
+     "score": 0.9999,
+     "flags": [],
+     "id": 5,
+     "original": "2757000",
+     "source": "ocr",
+     "history": []
+    }
+   ]
+  },
+  {
+   "sha256": "41f8b2623e03f572900bdf26c3f6b4af54f7d4ce0ed1e91c14a4449e14a7aadd",
+   "files": [
+    "Voucher/BKK-0117.jpg"
+   ],
+   "flags": [],
+   "status": "belum_dicek",
+   "fields": [
+    {
+     "kind": "doc_id",
+     "value": "APM-2403-0117",
+     "key": "APM24030117",
+     "raw": "APM-2403-0117",
+     "line": 1,
+     "label": "nomor",
+     "score": 0.9957,
+     "flags": [],
+     "id": 0,
+     "original": "APM-2403-0117",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "date",
+     "value": "2024-03-28",
+     "key": "2024-03-28",
+     "raw": "28 Maret 2024",
+     "line": 2,
+     "label": "tanggal",
+     "score": 0.978,
+     "flags": [],
+     "id": 1,
+     "original": "2024-03-28",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "doc_id",
+     "value": "KW-2024/0815",
+     "key": "KW20240815",
+     "raw": "KW-2024/0815",
+     "line": 4,
+     "label": "",
+     "score": 0.9989,
+     "flags": [],
+     "id": 2,
+     "original": "KW-2024/0815",
+     "source": "ocr",
+     "history": []
+    },
+    {
+     "kind": "amount",
+     "value": "12450000",
+     "key": "12450000",
+     "raw": "Rp 12.450.000",
+     "line": 5,
+     "label": "total",
+     "score": 0.9862,
+     "flags": [],
+     "id": 3,
+     "original": "12450000",
+     "source": "ocr",
+     "history": []
+    }
+   ]
+  }
+ ],
+ "details": {
+  "4e9760475432a9372369e14966cfadbebc4b6ef2615af6985af43d2f30e980c4": {
+   "file": "01 kwitansi konsultasi.jpg",
+   "sha256": "4e9760475432a9372369e14966cfadbebc4b6ef2615af6985af43d2f30e980c4",
+   "size": [
+    1300,
+    986
+   ],
+   "lines": [
+    {
+     "text": "CV SUMBER MAKMUR ABADI",
+     "score": 0.9997,
+     "box": [
+      [
+       71.0,
+       151.0
+      ],
+      [
+       559.0,
+       116.0
+      ],
+      [
+       562.0,
+       156.0
+      ],
+      [
+       74.0,
+       191.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "KWITANSI No: KW-2024/0815",
+     "score": 0.9952,
+     "box": [
+      [
+       75.0,
+       221.0
+      ],
+      [
+       573.0,
+       188.0
+      ],
+      [
+       576.0,
+       228.0
+      ],
+      [
+       78.0,
+       261.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Tanggal: 12/03/2024",
+     "score": 0.9798,
+     "box": [
+      [
+       79.0,
+       293.0
+      ],
+      [
+       438.0,
+       266.0
+      ],
+      [
+       441.0,
+       309.0
+      ],
+      [
+       82.0,
+       336.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Telah terima dari: PT Klien Jaya",
+     "score": 0.9803,
+     "box": [
+      [
+       84.0,
+       363.0
+      ],
+      [
+       618.0,
+       328.0
+      ],
+      [
+       621.0,
+       370.0
+      ],
+      [
+       87.0,
+       404.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Uang sejumlah: Rp 12.450.000,00",
+     "score": 0.9951,
+     "box": [
+      [
+       90.0,
+       434.0
+      ],
+      [
+       677.0,
+       393.0
+      ],
+      [
+       680.0,
+       435.0
+      ],
+      [
+       93.0,
+       477.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Untuk pembayaran: Jasa konsultasi Maret",
+     "score": 0.9987,
+     "box": [
+      [
+       94.0,
+       506.0
+      ],
+      [
+       814.0,
+       455.0
+      ],
+      [
+       817.0,
+       498.0
+      ],
+      [
+       97.0,
+       549.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Faktur: INV-00123",
+     "score": 0.9934,
+     "box": [
+      [
+       100.0,
+       576.0
+      ],
+      [
+       411.0,
+       555.0
+      ],
+      [
+       414.0,
+       595.0
+      ],
+      [
+       103.0,
+       616.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    }
+   ],
+   "preprocess": {
+    "scale": 1.0,
+    "has_shadow": true,
+    "blur_score": 773.9,
+    "variant": "asli"
+   }
+  },
+  "35928f78f83949b02d69bf74eeff3915d6d1b666343284b0b83c4b0fd14cb6b8": {
+   "file": "02 invoice angkut.jpg",
+   "sha256": "35928f78f83949b02d69bf74eeff3915d6d1b666343284b0b83c4b0fd14cb6b8",
+   "size": [
+    1240,
+    900
+   ],
+   "lines": [
+    {
+     "text": "PT ANGIN SEPOI LOGISTIK",
+     "score": 0.9998,
+     "box": [
+      [
+       68.0,
+       71.0
+      ],
+      [
+       514.0,
+       71.0
+      ],
+      [
+       514.0,
+       111.0
+      ],
+      [
+       68.0,
+       111.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "INVOICE",
+     "score": 0.9999,
+     "box": [
+      [
+       66.0,
+       140.0
+      ],
+      [
+       215.0,
+       140.0
+      ],
+      [
+       215.0,
+       184.0
+      ],
+      [
+       66.0,
+       184.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Nomor: INV/2024/03/0457",
+     "score": 0.9819,
+     "box": [
+      [
+       69.0,
+       214.0
+      ],
+      [
+       517.0,
+       214.0
+      ],
+      [
+       517.0,
+       254.0
+      ],
+      [
+       69.0,
+       254.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Tanggal: 5 Maret 2024",
+     "score": 0.9998,
+     "box": [
+      [
+       66.0,
+       284.0
+      ],
+      [
+       454.0,
+       281.0
+      ],
+      [
+       454.0,
+       325.0
+      ],
+      [
+       67.0,
+       329.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "No. Rek: 123-456-7890",
+     "score": 0.992,
+     "box": [
+      [
+       69.0,
+       356.0
+      ],
+      [
+       464.0,
+       356.0
+      ],
+      [
+       464.0,
+       396.0
+      ],
+      [
+       69.0,
+       396.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Biaya angkut",
+     "score": 0.9921,
+     "box": [
+      [
+       68.0,
+       427.0
+      ],
+      [
+       298.0,
+       427.0
+      ],
+      [
+       298.0,
+       471.0
+      ],
+      [
+       68.0,
+       471.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Rp 3.200.000",
+     "score": 0.979,
+     "box": [
+      [
+       396.0,
+       426.0
+      ],
+      [
+       631.0,
+       426.0
+      ],
+      [
+       631.0,
+       470.0
+      ],
+      [
+       396.0,
+       470.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "PPN 11%",
+     "score": 0.9998,
+     "box": [
+      [
+       64.0,
+       496.0
+      ],
+      [
+       227.0,
+       494.0
+      ],
+      [
+       228.0,
+       538.0
+      ],
+      [
+       65.0,
+       541.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Rp 352.000",
+     "score": 0.9996,
+     "box": [
+      [
+       379.0,
+       496.0
+      ],
+      [
+       584.0,
+       494.0
+      ],
+      [
+       584.0,
+       542.0
+      ],
+      [
+       380.0,
+       545.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Total",
+     "score": 1.0,
+     "box": [
+      [
+       64.0,
+       567.0
+      ],
+      [
+       156.0,
+       567.0
+      ],
+      [
+       156.0,
+       611.0
+      ],
+      [
+       64.0,
+       611.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Rp 3.552.000",
+     "score": 0.9991,
+     "box": [
+      [
+       328.0,
+       568.0
+      ],
+      [
+       565.0,
+       565.0
+      ],
+      [
+       565.0,
+       611.0
+      ],
+      [
+       328.0,
+       613.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    }
+   ],
+   "preprocess": {
+    "scale": 1.0,
+    "has_shadow": true,
+    "blur_score": 729.3,
+    "variant": "asli"
+   }
+  },
+  "b4f2331d4dc99e6900c887ee2fb379943a5975f5f72be34f0672bda32ef7ddb2": {
+   "file": "03 nota bangunan.jpg",
+   "sha256": "b4f2331d4dc99e6900c887ee2fb379943a5975f5f72be34f0672bda32ef7ddb2",
+   "size": [
+    1286,
+    964
+   ],
+   "lines": [
+    {
+     "text": "TOKO BANGUNAN SINAR JAYA",
+     "score": 0.9879,
+     "box": [
+      [
+       108.0,
+       71.0
+      ],
+      [
+       556.0,
+       94.0
+      ],
+      [
+       554.0,
+       133.0
+      ],
+      [
+       106.0,
+       110.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "NOTA No.0O4512",
+     "score": 0.9683,
+     "box": [
+      [
+       105.0,
+       134.0
+      ],
+      [
+       383.0,
+       147.0
+      ],
+      [
+       382.0,
+       184.0
+      ],
+      [
+       103.0,
+       171.0
+      ]
+     ],
+     "reread": "NOTA No. 004512",
+     "reread_score": 0.9828
+    },
+    {
+     "text": "Tgl31/02/2024",
+     "score": 0.9915,
+     "box": [
+      [
+       102.0,
+       197.0
+      ],
+      [
+       339.0,
+       207.0
+      ],
+      [
+       337.0,
+       248.0
+      ],
+      [
+       100.0,
+       237.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Semen40kg×20",
+     "score": 0.9598,
+     "box": [
+      [
+       99.0,
+       260.0
+      ],
+      [
+       376.0,
+       274.0
+      ],
+      [
+       374.0,
+       314.0
+      ],
+      [
+       97.0,
+       301.0
+      ]
+     ],
+     "reread": "Semen 40kg × 20",
+     "reread_score": 0.9129
+    },
+    {
+     "text": "Rp 1.300.000",
+     "score": 0.9893,
+     "box": [
+      [
+       415.0,
+       276.0
+      ],
+      [
+       628.0,
+       285.0
+      ],
+      [
+       627.0,
+       326.0
+      ],
+      [
+       413.0,
+       317.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Besi10mm x15",
+     "score": 0.9693,
+     "box": [
+      [
+       96.0,
+       322.0
+      ],
+      [
+       349.0,
+       335.0
+      ],
+      [
+       347.0,
+       375.0
+      ],
+      [
+       94.0,
+       362.0
+      ]
+     ],
+     "reread": "Besi 10mm x 15",
+     "reread_score": 0.9877
+    },
+    {
+     "text": "Rp 1.275.000",
+     "score": 0.9593,
+     "box": [
+      [
+       404.0,
+       339.0
+      ],
+      [
+       616.0,
+       348.0
+      ],
+      [
+       615.0,
+       388.0
+      ],
+      [
+       402.0,
+       379.0
+      ]
+     ],
+     "reread": "Rp 1.275.000",
+     "reread_score": 0.9636
+    },
+    {
+     "text": "Total",
+     "score": 1.0,
+     "box": [
+      [
+       88.0,
+       383.0
+      ],
+      [
+       175.0,
+       387.0
+      ],
+      [
+       173.0,
+       430.0
+      ],
+      [
+       86.0,
+       426.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Rp 2.575.000",
+     "score": 0.9846,
+     "box": [
+      [
+       313.0,
+       398.0
+      ],
+      [
+       525.0,
+       406.0
+      ],
+      [
+       523.0,
+       445.0
+      ],
+      [
+       312.0,
+       437.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Jumlah dibayar",
+     "score": 0.9995,
+     "box": [
+      [
+       84.0,
+       448.0
+      ],
+      [
+       328.0,
+       459.0
+      ],
+      [
+       326.0,
+       503.0
+      ],
+      [
+       82.0,
+       491.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Rp2.757.000",
+     "score": 0.9999,
+     "box": [
+      [
+       378.0,
+       463.0
+      ],
+      [
+       590.0,
+       472.0
+      ],
+      [
+       589.0,
+       513.0
+      ],
+      [
+       376.0,
+       504.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    }
+   ],
+   "preprocess": {
+    "scale": 1.0,
+    "has_shadow": false,
+    "blur_score": 59.7,
+    "variant": "asli"
+   }
+  },
+  "41f8b2623e03f572900bdf26c3f6b4af54f7d4ce0ed1e91c14a4449e14a7aadd": {
+   "file": "Voucher/BKK-0117.jpg",
+   "sha256": "41f8b2623e03f572900bdf26c3f6b4af54f7d4ce0ed1e91c14a4449e14a7aadd",
+   "size": [
+    1240,
+    760
+   ],
+   "lines": [
+    {
+     "text": "BUKTI KAS KELUAR",
+     "score": 0.9757,
+     "box": [
+      [
+       67.0,
+       72.0
+      ],
+      [
+       390.0,
+       70.0
+      ],
+      [
+       391.0,
+       107.0
+      ],
+      [
+       68.0,
+       109.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "No. Voucher: APM-2403-0117",
+     "score": 0.9957,
+     "box": [
+      [
+       67.0,
+       143.0
+      ],
+      [
+       569.0,
+       140.0
+      ],
+      [
+       569.0,
+       180.0
+      ],
+      [
+       67.0,
+       182.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Tanggal: 28 Maret 2024",
+     "score": 0.978,
+     "box": [
+      [
+       66.0,
+       213.0
+      ],
+      [
+       477.0,
+       211.0
+      ],
+      [
+       477.0,
+       253.0
+      ],
+      [
+       66.0,
+       255.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Dibayarkan kepada: CV Sumber Makmur Abadi",
+     "score": 0.9894,
+     "box": [
+      [
+       69.0,
+       283.0
+      ],
+      [
+       872.0,
+       283.0
+      ],
+      [
+       872.0,
+       325.0
+      ],
+      [
+       69.0,
+       325.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Keterangan: Pelunasan KW-2024/0815",
+     "score": 0.9989,
+     "box": [
+      [
+       66.0,
+       355.0
+      ],
+      [
+       724.0,
+       352.0
+      ],
+      [
+       724.0,
+       395.0
+      ],
+      [
+       66.0,
+       398.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    },
+    {
+     "text": "Jumlah: Rp 12.450.000",
+     "score": 0.9862,
+     "box": [
+      [
+       64.0,
+       428.0
+      ],
+      [
+       461.0,
+       425.0
+      ],
+      [
+       461.0,
+       465.0
+      ],
+      [
+       64.0,
+       467.0
+      ]
+     ],
+     "reread": null,
+     "reread_score": null
+    }
+   ],
+   "preprocess": {
+    "scale": 1.0,
+    "has_shadow": false,
+    "blur_score": 898.9,
+    "variant": "asli"
+   }
+  }
+ }
+}

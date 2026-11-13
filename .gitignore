@@ -1,0 +1,26 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+*.egg-info/
+node_modules/
+target/
+dist/
+# Data klien tidak pernah masuk repo
+*.jpg
+*.jpeg
+*.png
+*.tif
+*.tiff
+OCR_Vouching_*.json
+List_Filling*.xlsx
+app/dist/
+app/src-tauri/target/
+app/src-tauri/gen/
+# Pengecualian: foto demo sintetis dan ikon aplikasi (bukan data klien)
+!app/public/demo/**/*.jpg
+!app/src-tauri/icons/*.png
+
+# Hasil kerja pengguna (folder kerja, Excel) tidak masuk repo
+Output OCR/
+build/
