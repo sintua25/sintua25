@@ -2,7 +2,7 @@
  * @name StereoVoice
  * @author Alexander
  * @description Kirim suara mic dalam stereo (Opus 2 kanal) dengan bitrate yang bisa diatur. Matikan echo cancellation, noise suppression, dan AGC secara opsional.
- * @version 1.1.0
+ * @version 1.1.1
  */
 
 /*
@@ -43,6 +43,14 @@
  *   - Action echo/noise/AGC dicari juga lewat nama action dispatch (modul Discord sekarang
  *     sering diekspor dengan nama acak/minified).
  *   - diagnose() melaporkan lebih banyak detail (bentuk koneksi, opsi terakhir).
+ *
+ * Perubahan 1.1.1 (dari diagnose() di Discord asli, 2026-11-13):
+ *   - Bentuk terkonfirmasi: engine.connections = Set berisi wrapper (punya setCodecs,
+ *     setVoiceBitRate, voiceBitrate) dengan .conn = Object biasa yang punya
+ *     setTransportOptions sebagai properti sendiri (patch instance).
+ *   - Update parsial yang hanya membawa encodingVoiceBitRate sekarang ikut diganti nilainya,
+ *     supaya setVoiceBitRate Discord tidak mengembalikan bitrate ke bawaan channel.
+ *   - Hook tambahan sebelum wrapper.setCodecs.
  */
 
 module.exports = class StereoVoice {
@@ -216,9 +224,17 @@ module.exports = class StereoVoice {
 
   transform(opts) {
     if (!opts || typeof opts !== "object") return opts;
-    if (!opts.audioEncoder || typeof opts.audioEncoder !== "object") return opts;
-
     const bps = Math.round(this.settings.bitrate * 1000);
+
+    // Update parsial yang HANYA membawa bitrate (dari setVoiceBitRate / bitrate channel):
+    // ganti nilainya saja, bentuk objek tetap. Tanpa ini Discord menimpa bitrate kita.
+    if (!opts.audioEncoder || typeof opts.audioEncoder !== "object") {
+      if (typeof opts.encodingVoiceBitRate === "number" && opts.encodingVoiceBitRate !== bps) {
+        return { ...opts, encodingVoiceBitRate: bps };
+      }
+      return opts;
+    }
+
     const out = { ...opts };
     const enc = { ...opts.audioEncoder };
 
@@ -298,6 +314,12 @@ module.exports = class StereoVoice {
           BdApi.Patcher.after(this.id, proto, "updateVideoQuality", (thisObj) => {
             this.patchConnection(this.resolveConnection(thisObj));
           });
+          // setCodecs adalah tempat Discord membangun audioEncoder; pastikan .conn sudah dipatch dulu.
+          if (typeof proto.setCodecs === "function") {
+            BdApi.Patcher.before(this.id, proto, "setCodecs", (thisObj) => {
+              this.patchConnection(this.resolveConnection(thisObj));
+            });
+          }
           this.hooks.wrapperPrototype = true;
         } catch (e) {
           this.debug("Hook updateVideoQuality gagal:", e);

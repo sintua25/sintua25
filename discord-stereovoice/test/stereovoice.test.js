@@ -45,6 +45,15 @@ class FakeWrapper {
     this.conn = makeNativeConn();
   }
   updateVideoQuality() {}
+  setCodecs() {
+    this.conn.setTransportOptions({
+      audioEncoder: { type: 120, name: "opus", freq: 48000, pacsize: 960, channels: 1, rate: 64000, params: {} },
+      encodingVoiceBitRate: 64000,
+    });
+  }
+  setVoiceBitRate(bps) {
+    this.conn.setTransportOptions({ encodingVoiceBitRate: bps });
+  }
 }
 
 function setup({ mangledActions = false, savedSettings = {} } = {}) {
@@ -126,6 +135,23 @@ test("transform: update parsial tanpa audioEncoder tidak disentuh", () => {
   const partial = { selfMute: true };
   assert.equal(plugin.transform(partial), partial);
   assert.equal(plugin.transform(undefined), undefined);
+});
+
+test("transform: update bitrate saja diganti nilainya, bentuk tetap", () => {
+  const { plugin } = setup();
+  assert.deepEqual(plugin.transform({ encodingVoiceBitRate: 64000 }), { encodingVoiceBitRate: 256000 });
+});
+
+test("alur nyata: setCodecs lalu setVoiceBitRate tetap stereo 256 kbps", () => {
+  const { plugin, engine } = setup();
+  engine.connections = { add: undefined }; // hanya hook prototype wrapper
+  plugin.start();
+  const w = new FakeWrapper();
+  w.setCodecs();
+  w.setVoiceBitRate(64000);
+  assert.equal(w.conn.received[0].audioEncoder.channels, 2);
+  assert.deepEqual(w.conn.received[1], { encodingVoiceBitRate: 256000 });
+  plugin.stop();
 });
 
 test("detect: koneksi yang sudah ada dipatch (instance native di dalam wrapper)", () => {
