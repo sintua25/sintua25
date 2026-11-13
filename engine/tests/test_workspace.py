@@ -199,3 +199,14 @@ def test_unknown_page(ws):
     with pytest.raises(WorkspaceError) as e:
         ws.confirm("0" * 64)
     assert e.value.code == "PAGE_NOT_FOUND"
+
+
+def test_add_field_from_ocr_line_keeps_trace(ws):
+    sha = page_sha(ws)
+    ws.add_field(sha, "doc_id", "KW-2024/0815", "dipilih dari teks lengkap", line=0)
+    f = next(p for p in ws.state()["pages"] if p["sha256"] == sha)["fields"][-1]
+    assert (f["line"], f["raw"], f["source"]) == (0, "KWITANSI No: KW-2024/0815", "auditor")
+    for bad in (-1, 99):
+        with pytest.raises(WorkspaceError) as e:
+            ws.add_field(sha, "doc_id", "X-1", "x", line=bad)
+        assert e.value.code == "LINE_NOT_FOUND"

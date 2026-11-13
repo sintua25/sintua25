@@ -38,12 +38,16 @@ def test_export_writes_excel_and_json_and_logs_hashes(ws):
 
     data = json.loads(Path(js["path"]).read_text(encoding="utf-8"))
     page = next(p for p in data["pages"] if p["sha256"] == sha_page)
+    assert page["text"][0]["line"] == 0
     amt = next(f for f in page["fields"] if f["kind"] == "amount")
     assert (amt["value"], amt["original"]) == ("12500000", "12450000.00")  # nominal tetap string
     assert page["summary"]["main_amount"] == "12500000" and page["status"] == "dikonfirmasi"
 
     wb = load_workbook(xl["path"])
-    assert wb.sheetnames == ["Ringkasan", "Detail", "Jejak audit", "Info"]
+    assert wb.sheetnames == ["Ringkasan", "Detail", "Teks lengkap", "Jejak audit", "Info"]
+    text_rows = [r for r in wb["Teks lengkap"].iter_rows(values_only=True)][1:]
+    assert ("Uang sejumlah: Rp 12.450.000,00" in [r[3] for r in text_rows])
+    assert [t["text"] for t in page["text"]] == ["KWITANSI No: KW-2024/0815", "Uang sejumlah: Rp 12.450.000,00"]
     rows = list(wb["Ringkasan"].iter_rows(values_only=True))
     assert rows[0][:6] == ("No", "File foto", "Status", "Nomor dokumen", "Tanggal", "Nominal utama")
     confirmed = next(r for r in rows[1:] if r[2] == "Dikonfirmasi")

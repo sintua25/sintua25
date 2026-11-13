@@ -9,9 +9,12 @@ interface Props {
   imageUrl: string;
   selectedField: number | null;
   onSelectField: (id: number) => void;
+  /** Baris teks yang dipilih dari "Teks lengkap" (tanpa nilai). */
+  selectedLine: number | null;
+  onSelectLine: (line: number) => void;
 }
 
-export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField }: Props) {
+export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField, selectedLine, onSelectLine }: Props) {
   const desk = useRef<HTMLDivElement>(null);
   const [avail, setAvail] = useState({ w: 800, h: 600 });
   const [fit, setFit] = useState(true);
@@ -39,7 +42,7 @@ export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField
     entry.doubt ||= f.flags.length > 0;
     lineFields.set(f.line, entry);
   }
-  const activeLine = page.fields.find((f) => f.id === selectedField)?.line ?? null;
+  const activeLine = selectedLine ?? page.fields.find((f) => f.id === selectedField)?.line ?? null;
   const file = page.files[0] ?? "";
 
   return (
@@ -55,7 +58,7 @@ export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField
       <div className="desk" ref={desk}>
         {page.source_kind === "docx_text" ? (
           <TextPage lines={detail?.lines.map((l) => l.text) ?? []} lineFields={lineFields} activeLine={activeLine}
-            onSelectField={onSelectField} />
+            onSelectField={onSelectField} onSelectLine={onSelectLine} />
         ) : imgFailed ? (
           <div className="note note-error">
             Foto tidak bisa ditampilkan.
@@ -68,13 +71,13 @@ export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField
               <svg viewBox={`0 0 ${w} ${h}`} preserveAspectRatio="none" role="img" aria-label="Kotak hasil OCR">
                 {detail.lines.map((line, i) => {
                   const fields = lineFields.get(i);
-                  if (!fields && !allLines) return null;
+                  if (!fields && !allLines && i !== activeLine) return null;
                   const cls = ["box-line", fields && "box-field", fields?.doubt && "box-doubt", i === activeLine && "box-active"]
                     .filter(Boolean)
                     .join(" ");
                   return (
                     <polygon key={i} className={cls} points={polygonPoints(line.box)}
-                      onClick={fields ? () => onSelectField(fields.ids[0]!) : undefined}>
+                      onClick={() => (fields ? onSelectField(fields.ids[0]!) : onSelectLine(i))}>
                       <title>{line.text}</title>
                     </polygon>
                   );
@@ -89,11 +92,12 @@ export function PhotoView({ page, detail, imageUrl, selectedField, onSelectField
 }
 
 /** Teks dari Word: dibaca langsung tanpa OCR, jadi yang ditampilkan adalah barisnya. */
-function TextPage({ lines, lineFields, activeLine, onSelectField }: {
+function TextPage({ lines, lineFields, activeLine, onSelectField, onSelectLine }: {
   lines: string[];
   lineFields: Map<number, { ids: number[]; doubt: boolean }>;
   activeLine: number | null;
   onSelectField: (id: number) => void;
+  onSelectLine: (line: number) => void;
 }) {
   return (
     <ol className="textpage" aria-label="Teks dokumen Word">
@@ -102,7 +106,7 @@ function TextPage({ lines, lineFields, activeLine, onSelectField }: {
         const cls = [f && "has-field", f?.doubt && "doubt", i === activeLine && "active"].filter(Boolean).join(" ");
         return (
           <li key={i} className={cls || undefined}>
-            {f ? <button className="textline" onClick={() => onSelectField(f.ids[0]!)}>{text}</button> : text}
+            <button className="textline" onClick={() => (f ? onSelectField(f.ids[0]!) : onSelectLine(i))}>{text}</button>
           </li>
         );
       })}

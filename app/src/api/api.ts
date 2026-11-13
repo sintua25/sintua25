@@ -14,7 +14,8 @@ export interface Api {
   /** URL file di folder kerja, misal gambar halaman PDF (`renders/<id>.png`). */
   workspaceUrl(session: Session, relFile: string): string;
   correct(session: Session, sha: string, field: number, value: string, reason: string, expected: string): Promise<void>;
-  addField(session: Session, sha: string, kind: FieldKind, value: string, reason: string): Promise<void>;
+  /** `line` = baris teks OCR asal nilai, kalau auditor memilihnya dari teks lengkap. */
+  addField(session: Session, sha: string, kind: FieldKind, value: string, reason: string, line?: number): Promise<void>;
   confirm(session: Session, sha: string): Promise<void>;
   unconfirm(session: Session, sha: string, reason: string): Promise<void>;
   verify(session: Session): Promise<VerifyResult>;

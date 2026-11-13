@@ -346,5 +346,22 @@ kbd {
 .textpage li.has-field { box-shadow: inset 3px 0 0 var(--tick); }
 .textpage li.doubt { background: var(--highlighter); }
 .textpage li.active { outline: 2px solid var(--ink); outline-offset: -2px; }
-.textline { all: unset; cursor: pointer; display: block; width: 100%; }
+.textline { all: unset; box-sizing: border-box; cursor: pointer; display: block; width: 100%; }
 .textline:focus-visible { outline: 2px solid var(--ink); }
+
+/* Tab ledger: Nilai | Teks lengkap */
+.tabs { display: flex; gap: 2px; padding: 0 18px; border-bottom: 1px solid var(--paper-rule); }
+.tabs button { all: unset; cursor: pointer; padding: 8px 10px; font-size: 13px; color: var(--ink-soft); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tabs button[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+.tabs button:focus-visible { outline: 2px solid var(--ink); }
+.tabs .count { margin-left: 6px; font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); }
+.fulltext-bar { display: flex; gap: 12px; align-items: baseline; justify-content: space-between; padding: 10px 18px; font-size: 12.5px; }
+.fulltext { list-style: none; margin: 0; padding: 0 0 12px; }
+.fulltext li { border-bottom: 1px solid var(--paper-rule); }
+.fulltext li.used { box-shadow: inset 3px 0 0 var(--tick); }
+.fulltext li[aria-selected="true"] { background: var(--paper-deep); outline: 2px solid var(--ink); outline-offset: -2px; }
+.fulltext .textline { display: grid; grid-template-columns: 28px 1fr auto; gap: 8px; padding: 5px 18px; font-size: 13px; }
+.fulltext .n, .fulltext .s { font-size: 11px; color: var(--ink-faint); padding-top: 2px; }
+.fulltext .t { overflow-wrap: anywhere; user-select: text; }
+.note .hint { display: block; margin-top: 2px; }
+.by-hand { white-space: nowrap; }

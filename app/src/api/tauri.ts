@@ -30,8 +30,8 @@ export const tauriApi: Api = {
   async correct(s, sha, field, value, reason, expected) {
     await invoke("correct", { workspace: s.workspace, sha, field, value, reason, expected });
   },
-  async addField(s, sha, kind, value, reason) {
-    await invoke("add_field", { workspace: s.workspace, sha, kind, value, reason });
+  async addField(s, sha, kind, value, reason, line) {
+    await invoke("add_field", { workspace: s.workspace, sha, kind, value, reason, line: line ?? null });
   },
   async confirm(s, sha) {
     await invoke("confirm", { workspace: s.workspace, sha });

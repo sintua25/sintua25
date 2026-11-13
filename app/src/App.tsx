@@ -20,6 +20,7 @@ export function App({ api }: { api: Api }) {
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<PageDetail | null>(null);
   const [field, setField] = useState<number | null>(null);
+  const [line, setLine] = useState<number | null>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -102,6 +103,7 @@ export function App({ api }: { api: Api }) {
 
   useEffect(() => {
     setField(null);
+    setLine(null);
     setDetail(null);
     if (!session || !selected) return;
     let live = true;
@@ -132,7 +134,8 @@ export function App({ api }: { api: Api }) {
 
   const actions: LedgerActions | null = session && page ? {
     correct: (f, value, reason) => mutate(() => api.correct(session, page.sha256, f.id, value, reason, f.value), "Koreksi disimpan"),
-    addField: (kind, value, reason) => mutate(() => api.addField(session, page.sha256, kind, value, reason), "Nilai ditambahkan"),
+    addField: (kind, value, reason, fromLine) =>
+      mutate(() => api.addField(session, page.sha256, kind, value, reason, fromLine), "Nilai ditambahkan"),
     confirm: () => mutate(() => api.confirm(session, page.sha256), "Foto dikonfirmasi"),
     unconfirm: (reason) => mutate(() => api.unconfirm(session, page.sha256, reason), "Konfirmasi dibatalkan"),
     next: () => setSelected(nextOpenPage(pages, page.sha256)),
@@ -206,8 +209,11 @@ export function App({ api }: { api: Api }) {
             <>
               <PhotoView page={page} detail={detail}
                 imageUrl={page.image ? api.workspaceUrl(session, page.image) : api.imageUrl(session, page.files[0] ?? "")}
-                selectedField={field} onSelectField={setField} />
-              <Ledger page={page} detail={detail} selectedField={field} onSelectField={setField} actions={actions}
+                selectedField={field} onSelectField={(id) => { setLine(null); setField(id); }}
+                selectedLine={line} onSelectLine={(i) => { setField(null); setLine(i); }} />
+              <Ledger page={page} detail={detail} selectedField={field}
+                onSelectField={(id) => { setLine(null); setField(id); }}
+                selectedLine={line} onSelectLine={(i) => { setField(null); setLine(i); }} actions={actions}
                 hasNext={nextOpenPage(pages, page.sha256) !== null} />
             </>
           ) : (

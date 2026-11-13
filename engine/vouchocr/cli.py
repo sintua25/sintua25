@@ -50,6 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     ad.add_argument("--kind", required=True, choices=["doc_id", "amount", "date"])
     ad.add_argument("--value", required=True)
     ad.add_argument("--reason", required=True)
+    ad.add_argument("--line", type=int, help="Baris teks OCR asal nilai (opsional).")
     ad.add_argument("--actor")
 
     cf = sub.add_parser("confirm", help="Konfirmasi satu foto sudah dicek.")
@@ -92,7 +93,8 @@ def main(argv: list[str] | None = None) -> int:
             _emit({"type": "saved", "entry": ws.correct(args.page, args.field, args.value, args.reason,
                                                         expected=args.expected, actor=args.actor)})
         elif args.cmd == "add-field":
-            _emit({"type": "saved", "entry": ws.add_field(args.page, args.kind, args.value, args.reason, actor=args.actor)})
+            _emit({"type": "saved", "entry": ws.add_field(args.page, args.kind, args.value, args.reason,
+                                                          actor=args.actor, line=args.line)})
         elif args.cmd == "confirm":
             _emit({"type": "saved", "entry": ws.confirm(args.page, actor=args.actor)})
         elif args.cmd == "unconfirm":

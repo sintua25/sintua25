@@ -79,13 +79,14 @@ export function createDemoApi(): Api {
       f.value = v;
       f.key = v;
     },
-    async addField(_s, sha, kind, value, reason) {
+    async addField(_s, sha, kind, value, reason, line) {
       const p = find(sha);
       needReason(reason);
       needOpen(p);
       const v = normalize(kind, value);
+      const raw = line !== undefined ? details[sha]?.lines[line]?.text ?? "" : "";
       p.fields.push({
-        id: p.fields.length, kind, value: v, key: v, raw: "", line: null, label: "", score: null, flags: [],
+        id: p.fields.length, kind, value: v, key: v, raw, line: line ?? null, label: "", score: null, flags: [],
         original: null, source: "auditor", history: [entry("add_field", null, { kind, value: v }, reason.trim())],
       });
     },

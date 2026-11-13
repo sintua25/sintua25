@@ -81,3 +81,10 @@ export function nextOpenPage(pages: PageState[], current: string): string | null
   }
   return null;
 }
+
+/** "No. PO : P260910009" -> "P260910009": buang label di depan titik dua; sisanya diedit auditor. */
+export function guessValue(text: string): string {
+  // Titik dua label diawali huruf/titik ("No. PO :"); "10:30" bukan label.
+  const m = /^.*[A-Za-z.)]\s*:\s*(\S.*)$/.exec(text);
+  return (m?.[1] ?? text).trim();
+}

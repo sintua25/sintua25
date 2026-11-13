@@ -112,12 +112,22 @@ async fn correct(
 }
 
 #[tauri::command]
-async fn add_field(workspace: String, sha: String, kind: String, value: String, reason: String) -> Result<Value, ApiError> {
-    blocking(call(vec![
+async fn add_field(
+    workspace: String,
+    sha: String,
+    kind: String,
+    value: String,
+    reason: String,
+    line: Option<u32>,
+) -> Result<Value, ApiError> {
+    let mut args = vec![
         "add-field".into(), "-w".into(), workspace, "--page".into(), sha, opt("kind", &kind),
         opt("value", &value), opt("reason", &reason),
-    ]))
-    .await
+    ];
+    if let Some(line) = line {
+        args.push(opt("line", &line.to_string()));
+    }
+    blocking(call(args)).await
 }
 
 #[tauri::command]

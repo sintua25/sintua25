@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import type { ApiError, Field, FieldKind, PageDetail, PageState } from "../api/types";
 import { isApiError } from "../api/types";
 import { formatScore, formatTimestamp, formatValue } from "../lib/format";
-import { KIND_LABEL, isCorrected, sortFields } from "../lib/review";
+import { KIND_LABEL, guessValue, isCorrected, sortFields } from "../lib/review";
 import { Tick } from "./icons";
 
 export interface LedgerActions {
   correct: (field: Field, value: string, reason: string) => Promise<void>;
-  addField: (kind: FieldKind, value: string, reason: string) => Promise<void>;
+  addField: (kind: FieldKind, value: string, reason: string, line?: number) => Promise<void>;
   confirm: () => Promise<void>;
   unconfirm: (reason: string) => Promise<void>;
   next: () => void;
@@ -18,14 +18,18 @@ interface Props {
   detail: PageDetail | null;
   selectedField: number | null;
   onSelectField: (id: number | null) => void;
+  selectedLine: number | null;
+  onSelectLine: (line: number | null) => void;
   actions: LedgerActions;
   hasNext: boolean;
 }
 
-export function Ledger({ page, detail, selectedField, onSelectField, actions, hasNext }: Props) {
+export function Ledger({ page, detail, selectedField, onSelectField, selectedLine, onSelectLine, actions, hasNext }: Props) {
   const fields = sortFields(page.fields);
   const selected = page.fields.find((f) => f.id === selectedField) ?? null;
   const locked = page.status === "dikonfirmasi";
+  const [tab, setTab] = useState<"nilai" | "teks">("nilai");
+  useEffect(() => { if (selectedLine !== null) setTab("teks"); }, [selectedLine]);
 
   return (
     <aside className="pane" aria-label="Ledger">
@@ -35,6 +39,16 @@ export function Ledger({ page, detail, selectedField, onSelectField, actions, ha
           {page.fields.length} nilai terbaca · {locked ? "dikonfirmasi" : "belum dicek"}
         </div>
       </div>
+      <div className="tabs" role="tablist">
+        <button role="tab" aria-selected={tab === "nilai"} onClick={() => setTab("nilai")}>Nilai</button>
+        <button role="tab" aria-selected={tab === "teks"} onClick={() => setTab("teks")}>
+          Teks lengkap{detail && <span className="count">{detail.lines.length}</span>}
+        </button>
+      </div>
+      {tab === "teks" ? (
+        <FullText key={`teks:${page.sha256}`} page={page} detail={detail} selectedLine={selectedLine} onSelectLine={onSelectLine}
+          locked={locked} onAdd={actions.addField} onDone={() => { onSelectLine(null); setTab("nilai"); }} />
+      ) : (
       <div className="ledger-scroll">
         {page.flags.map((f, i) => <div key={i} className="note">{f.message}</div>)}
         <table className="ledger">
@@ -62,6 +76,7 @@ export function Ledger({ page, detail, selectedField, onSelectField, actions, ha
           !locked && <AddFieldPanel key={page.sha256} onSave={actions.addField} />
         )}
       </div>
+      )}
       <ConfirmBar key={page.sha256} page={page} actions={actions} hasNext={hasNext} />
     </aside>
   );
@@ -223,6 +238,84 @@ function AddFieldPanel({ onSave }: { onSave: LedgerActions["addField"] }) {
       <div className="row">
         <button className="btn btn-ink" type="submit" disabled={busy || !value.trim() || !reason.trim()}>Simpan nilai</button>
         <button className="link" type="button" onClick={() => setOpen(false)}>Batal</button>
+      </div>
+    </form>
+  );
+}
+
+/** Semua baris teks hasil OCR. Klik baris = sorot di foto; baris bisa dijadikan nilai. */
+function FullText({ page, detail, selectedLine, onSelectLine, locked, onAdd, onDone }: {
+  page: PageState; detail: PageDetail | null; selectedLine: number | null; onSelectLine: (line: number | null) => void;
+  locked: boolean; onAdd: LedgerActions["addField"]; onDone: () => void;
+}) {
+  const [copied, setCopied] = useState(false);
+  if (!detail) return <div className="ledger-scroll"><div className="read" style={{ padding: 18 }}>Memuat teks…</div></div>;
+  const used = new Set(page.fields.map((f) => f.line).filter((l): l is number => l !== null));
+  const all = detail.lines.map((l) => l.text).join("\n");
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(all);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch { /* clipboard ditolak: teks tetap bisa diseleksi manual */ }
+  };
+  const line = selectedLine !== null ? detail.lines[selectedLine] : undefined;
+  return (
+    <div className="ledger-scroll">
+      <div className="fulltext-bar">
+        <span className="read">{detail.lines.length} baris terbaca. Klik baris untuk melihatnya di foto.</span>
+        <button className="link" onClick={copy}>{copied ? "Tersalin" : "Salin semua"}</button>
+      </div>
+      <ol className="fulltext">
+        {detail.lines.map((l, i) => (
+          <li key={i} aria-selected={i === selectedLine} className={used.has(i) ? "used" : undefined}>
+            <button className="textline" onClick={() => onSelectLine(i === selectedLine ? null : i)}>
+              <span className="mono n">{i + 1}</span>
+              <span className="t">{l.text}</span>
+              <span className="mono s">{formatScore(l.score)}</span>
+            </button>
+          </li>
+        ))}
+        {detail.lines.length === 0 && <li className="read">Tidak ada teks yang terbaca di foto ini.</li>}
+      </ol>
+      {line && selectedLine !== null && !locked && (
+        <AddFromLine key={selectedLine} lineNo={selectedLine} text={line.text} onAdd={onAdd} onDone={onDone} />
+      )}
+      {line && locked && <div className="panel"><div className="read">Foto sudah dikonfirmasi. Batalkan konfirmasi dulu untuk menambah nilai.</div></div>}
+    </div>
+  );
+}
+
+/** Jadikan (sebagian) baris teks sebagai nilai. Nilai tetap tertaut ke barisnya di foto. */
+function AddFromLine({ lineNo, text, onAdd, onDone }: {
+  lineNo: number; text: string; onAdd: LedgerActions["addField"]; onDone: () => void;
+}) {
+  const [kind, setKind] = useState<FieldKind>("doc_id");
+  const [value, setValue] = useState(guessValue(text));
+  const [reason, setReason] = useState("");
+  const { error, busy, run } = useSubmit();
+  return (
+    <form className="panel" onSubmit={async (e) => {
+      e.preventDefault();
+      if (await run(() => onAdd(kind, value, reason, lineNo))) onDone();
+    }}>
+      <h3>Jadikan nilai dari baris {lineNo + 1}</h3>
+      <div className="read">Baris teks: <span className="mono">{text}</span></div>
+      <label>Jenis
+        <select value={kind} onChange={(e) => setKind(e.target.value as FieldKind)}>
+          {(Object.keys(KIND_LABEL) as FieldKind[]).map((k) => <option key={k} value={k}>{KIND_LABEL[k]}</option>)}
+        </select>
+      </label>
+      <label>Nilai (hapus bagian yang bukan nilai)
+        <input className="mono" value={value} onChange={(e) => setValue(e.target.value)} spellCheck={false} />
+      </label>
+      <label>Alasan
+        <textarea value={reason} onChange={(e) => setReason(e.target.value)}
+          placeholder="Misal: nomor PO tidak terdeteksi otomatis, dicek ke foto" />
+      </label>
+      <ErrorNote error={error} />
+      <div className="row">
+        <button className="btn btn-ink" type="submit" disabled={busy || !value.trim() || !reason.trim()}>Simpan nilai</button>
       </div>
     </form>
   );

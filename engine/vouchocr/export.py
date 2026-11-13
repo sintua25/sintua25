@@ -49,9 +49,13 @@ def export(ws: Workspace, now: datetime | None = None) -> dict:
     xlsx_path = _free_path(out_dir / f"vouching-{stamp}.xlsx")
     json_path = xlsx_path.with_suffix(".json")
 
-    payload = {"schema": "meja-vouching.export/1", **info, "pages": [_page_json(p) for p in pages]}
+    # Teks lengkap per halaman (semua baris OCR, bukan hanya nilai yang diambil).
+    texts = {p["sha256"]: [{"line": i, "text": l["text"], "score": l["score"], "reread": l.get("reread")}
+                           for i, l in enumerate(ws.page(p["sha256"])["lines"])] for p in pages}
+    payload = {"schema": "meja-vouching.export/1", **info,
+               "pages": [{**_page_json(p), "text": texts[p["sha256"]]} for p in pages]}
     # Susun dua-duanya di memori dulu: kalau Excel gagal dibuat, tidak ada file setengah jadi.
-    xlsx = _xlsx(info, pages, ws.audit.entries())
+    xlsx = _xlsx(info, pages, ws.audit.entries(), texts)
     files = [
         {"path": str(json_path), "sha256": atomic_write_bytes(json_path, dump_json(payload))},
         {"path": str(xlsx_path), "sha256": atomic_write_bytes(xlsx_path, xlsx)},
@@ -111,7 +115,7 @@ def _page_json(page: dict) -> dict:
 
 # --- Excel -----------------------------------------------------------------------
 
-def _xlsx(info: dict, pages: list[dict], audit_entries) -> bytes:
+def _xlsx(info: dict, pages: list[dict], audit_entries, texts: dict[str, list[dict]]) -> bytes:
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Alignment, Font, PatternFill
@@ -168,6 +172,15 @@ def _xlsx(info: dict, pages: list[dict], audit_entries) -> bytes:
             if f.get("flags"):
                 ds.cell(ds.max_row, 12).fill = doubt_fill
     ds.auto_filter.ref = ds.dimensions
+
+    # Teks lengkap: semua baris yang terbaca, urut seperti di foto.
+    ts = sheet("Teks lengkap", ["No", "File foto", "Baris", "Teks", "Keyakinan", "Dibaca ulang"],
+               [5, 30, 7, 70, 10, 40])
+    for n, p in enumerate(pages, 1):
+        for t in texts.get(p["sha256"], []):
+            _row(ts, [n, p["files"][0], t["line"], t["text"], t["score"],
+                      t["reread"] if t["reread"] and t["reread"] != t["text"] else ""])
+    ts.auto_filter.ref = ts.dimensions
 
     # Jejak audit lengkap.
     js = sheet("Jejak audit", ["Urutan", "Waktu", "Oleh", "Aksi", "Target", "Nilai lama", "Nilai baru", "Alasan", "Hash"],

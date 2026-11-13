@@ -229,7 +229,8 @@ class Workspace:
             elif act == "add_field":
                 a = e["after"]
                 p["fields"].append({"id": len(p["fields"]), "kind": a["kind"], "value": a["value"],
-                                    "key": _key(a["kind"], a["value"]), "raw": "", "line": None,
+                                    "key": _key(a["kind"], a["value"]), "raw": a.get("raw", ""),
+                                    "line": a.get("line"),
                                     "label": a.get("label", ""), "score": None, "flags": [],
                                     "original": None, "source": "auditor", "history": [_hist(e)]})
             elif act == "confirm":
@@ -255,14 +256,22 @@ class Workspace:
         return self.audit.append("correct", f"page:{sha}/field:{field_id}", before=f["value"],
                                  after=new_value, reason=reason.strip(), actor=actor)
 
-    def add_field(self, sha: str, kind: str, value: str, reason: str, actor: str | None = None) -> dict:
+    def add_field(self, sha: str, kind: str, value: str, reason: str, actor: str | None = None,
+                  line: int | None = None) -> dict:
+        """Tambah nilai. `line` = baris teks OCR asal nilai (dipilih auditor dari teks lengkap),
+        supaya nilai tetap bisa ditelusuri ke kotaknya di foto."""
         page = self._state_page(sha)
         if kind not in KINDS:
             raise WorkspaceError("BAD_KIND", f"Jenis '{kind}' tidak dikenal.", f"Pakai salah satu: {', '.join(KINDS)}.")
+        after = {"kind": kind, "value": _normalize(kind, value)}
+        if line is not None:
+            lines = self.page(sha)["lines"]
+            if not 0 <= line < len(lines):
+                raise WorkspaceError("LINE_NOT_FOUND", f"Baris teks #{line} tidak ada di foto ini.", "Muat ulang data.")
+            after.update(line=line, raw=lines[line]["text"])
         self._require_reason(reason)
         self._require_open(page)
-        return self.audit.append("add_field", f"page:{sha}", after={"kind": kind, "value": _normalize(kind, value)},
-                                 reason=reason.strip(), actor=actor)
+        return self.audit.append("add_field", f"page:{sha}", after=after, reason=reason.strip(), actor=actor)
 
     def confirm(self, sha: str, actor: str | None = None) -> dict:
         page = self._state_page(sha)

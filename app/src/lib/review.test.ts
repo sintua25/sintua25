@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Field, PageState } from "../api/types";
-import { filterPages, nextOpenPage, sortFields, stepPage, summarize } from "./review";
+import { filterPages, guessValue, nextOpenPage, sortFields, stepPage, summarize } from "./review";
 
 const flag = { code: "LOW_CONFIDENCE", message: "x" };
 
@@ -60,4 +60,15 @@ describe("navigasi", () => {
     expect(nextOpenPage(pages, "d")).toBe("a");
     expect(nextOpenPage([page("x", { status: "dikonfirmasi" })], "x")).toBeNull();
   });
+});
+
+describe("guessValue", () => {
+  it.each([
+    ["No. PO : P260910009", "P260910009"],
+    ["P260910009", "P260910009"],
+    ["Nomor:", "Nomor:"],
+    ["  ", ""],
+    ["Jam 10:30", "Jam 10:30"],
+    ["Tgl: 10:30 No: INV-9", "INV-9"],
+  ])("%s -> %s", (input, out) => expect(guessValue(input)).toBe(out));
 });
