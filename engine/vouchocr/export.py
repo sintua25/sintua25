@@ -50,9 +50,11 @@ def export(ws: Workspace, now: datetime | None = None) -> dict:
     json_path = xlsx_path.with_suffix(".json")
 
     payload = {"schema": "meja-vouching.export/1", **info, "pages": [_page_json(p) for p in pages]}
+    # Susun dua-duanya di memori dulu: kalau Excel gagal dibuat, tidak ada file setengah jadi.
+    xlsx = _xlsx(info, pages, ws.audit.entries())
     files = [
         {"path": str(json_path), "sha256": atomic_write_bytes(json_path, dump_json(payload))},
-        {"path": str(xlsx_path), "sha256": atomic_write_bytes(xlsx_path, _xlsx(info, pages, ws.audit.entries()))},
+        {"path": str(xlsx_path), "sha256": atomic_write_bytes(xlsx_path, xlsx)},
     ]
     ws.audit.append("export", "workspace", data={"files": [
         {"name": Path(f["path"]).name, "sha256": f["sha256"]} for f in files]})
@@ -110,8 +112,12 @@ def _page_json(page: dict) -> dict:
 # --- Excel -----------------------------------------------------------------------
 
 def _xlsx(info: dict, pages: list[dict], audit_entries) -> bytes:
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Alignment, Font, PatternFill
+    except ImportError:
+        raise WorkspaceError("OPENPYXL_MISSING", "Paket Excel (openpyxl) belum terpasang di mesin OCR.",
+                             'Di folder engine jalankan: .\\.venv\\Scripts\\python.exe -m pip install -e ".[dev]"')
 
     wb = Workbook()
     head_font, head_fill = Font(bold=True, color="FFFFFF"), PatternFill("solid", fgColor="1C2B4A")
